@@ -1,12 +1,35 @@
 import { Router } from "express";
-import { verifyToken } from "../utils/handleJWT.js";
 import authMiddleware from "../middleware/auth.midddleware.js";
-import { updateCompanyLogo } from "../controllers/user.controller.js";
+import {
+  getUsers,
+  updateCompanyData,
+  deleteUser,
+  changePassword,
+  doubleStepVerification,
+  inviteUser,
+  logOutUser,
+  loginUser,
+  refreshUserSession,
+  registerUser,
+  updateCompanyLogo,
+  updateUserData,
+} from "../controllers/user.controller.js";
 
 const router = Router();
 
-router.use('/');
+router.use("/");
 
-router.get("/", authMiddleware);
-router.patch('/', uploadMiddleware.single('file'), updateCompanyLogo);
+router.post("/register", registerUser);
+router.put("/validation", authMiddleware, doubleStepVerification)
+router.post("/login", loginUser);
+router.put("/register", authMiddleware, updateUserData);
+router.patch("/company", authMiddleware, updateCompanyData);
+router.patch("/logo", authMiddleware, updateCompanyLogo);
+router.get("/", authMiddleware, getUsers);
+router.post("/refresh", refreshUserSession);
+router.post("/logout", authMiddleware, logOutUser);
+router.delete("/", authMiddleware, deleteUser);
+router.put("/password", authMiddleware, changePassword);
+router.post("/invite", authMiddleware, inviteUser);
+
 export default router;

@@ -1,0 +1,206 @@
+@baseUrl = http://localhost:3000
+
+### =========================
+### TOKENS
+### =========================
+@token_admin = 
+@token_guest = 
+@token_freelance = 
+
+@refresh_admin = 
+@refresh_guest = 
+@refresh_freelance = 
+
+### =========================
+### 1. REGISTER (3 usuarios)
+### =========================
+
+### Admin
+POST {{baseUrl}}/api/user/register
+Content-Type: application/json
+
+{
+  "email": "admin@test.com",
+  "password": "12345678"
+}
+
+### Guest
+POST {{baseUrl}}/api/user/register
+Content-Type: application/json
+
+{
+  "email": "guest@test.com",
+  "password": "12345678"
+}
+
+### Freelance
+POST {{baseUrl}}/api/user/register
+Content-Type: application/json
+
+{
+  "email": "freelance@test.com",
+  "password": "12345678"
+}
+
+### =========================
+### 2. VALIDATION (usar code real de BD)
+### =========================
+
+PUT {{baseUrl}}/api/user/validation
+Authorization: Bearer {{token_admin}}
+Content-Type: application/json
+
+{
+  "code": "123456"
+}
+
+### =========================
+### 3. LOGIN
+### =========================
+
+### Admin login
+POST {{baseUrl}}/api/user/login
+Content-Type: application/json
+
+{
+  "email": "admin@test.com",
+  "password": "12345678"
+}
+
+### Guest login
+POST {{baseUrl}}/api/user/login
+Content-Type: application/json
+
+{
+  "email": "guest@test.com",
+  "password": "12345678"
+}
+
+### Freelance login
+POST {{baseUrl}}/api/user/login
+Content-Type: application/json
+
+{
+  "email": "freelance@test.com",
+  "password": "12345678"
+}
+
+### =========================
+### 4. ONBOARDING
+### =========================
+
+### Datos personales
+PUT {{baseUrl}}/api/user/register
+Authorization: Bearer {{token_admin}}
+Content-Type: application/json
+
+{
+  "name": "Juan",
+  "lastName": "Pérez",
+  "nif": "12345678A"
+}
+
+### Crear empresa (admin owner)
+PATCH {{baseUrl}}/api/user/company
+Authorization: Bearer {{token_admin}}
+Content-Type: application/json
+
+{
+  "name": "Empresa SL",
+  "cif": "B12345678",
+  "address": "Calle Falsa 123",
+  "isFreelance": false
+}
+
+### Unirse como guest (mismo CIF)
+PATCH {{baseUrl}}/api/user/company
+Authorization: Bearer {{token_guest}}
+Content-Type: application/json
+
+{
+  "name": "Empresa SL",
+  "cif": "B12345678",
+  "address": "Calle Falsa 123",
+  "isFreelance": false
+}
+
+### Freelance
+PATCH {{baseUrl}}/api/user/company
+Authorization: Bearer {{token_freelance}}
+Content-Type: application/json
+
+{
+  "isFreelance": true
+}
+
+### =========================
+### 5. LOGO (multipart)
+### =========================
+
+PATCH {{baseUrl}}/api/user/logo
+Authorization: Bearer {{token_admin}}
+Content-Type: multipart/form-data
+
+file=@./logo.png
+
+### =========================
+### 6. GET USER
+### =========================
+
+GET {{baseUrl}}/api/user
+Authorization: Bearer {{token_admin}}
+
+### =========================
+### 7. REFRESH TOKEN
+### =========================
+
+POST {{baseUrl}}/api/user/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refresh_admin}}"
+}
+
+### =========================
+### 7. LOGOUT
+### =========================
+
+POST {{baseUrl}}/api/user/logout
+Authorization: Bearer {{token_admin}}
+
+### =========================
+### 8. DELETE USER
+### =========================
+
+### Soft delete
+DELETE {{baseUrl}}/api/user?soft=true
+Authorization: Bearer {{token_admin}}
+
+### Hard delete
+DELETE {{baseUrl}}/api/user
+Authorization: Bearer {{token_admin}}
+
+### =========================
+### 9. CHANGE PASSWORD
+### =========================
+
+PUT {{baseUrl}}/api/user/password
+Authorization: Bearer {{token_admin}}
+Content-Type: application/json
+
+{
+  "currentPassword": "12345678",
+  "newPassword": "87654321"
+}
+
+### =========================
+### 10. INVITE USER (solo admin)
+### =========================
+
+POST {{baseUrl}}/api/user/invite
+Authorization: Bearer {{token_admin}}
+Content-Type: application/json
+
+{
+  "email": "nuevo@empresa.com"
+}
