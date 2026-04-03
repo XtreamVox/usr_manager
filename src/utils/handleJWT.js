@@ -1,6 +1,7 @@
 // src/utils/handleJwt.js
 import jwt from 'jsonwebtoken';
 import crypto from 'node:crypto';
+import User from '../models/user.models';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const ACCESS_TOKEN_EXPIRES = '15m';  // Corto
@@ -43,4 +44,50 @@ export const verifyAccessToken = (token) => {
   } catch (err) {
     return null;
   }
+};
+
+// Ejemplo de rotación de tokens
+export const refreshTokens = async (req, res) => {
+  const { refreshToken } = req.body;
+
+  const storedToken = await RefreshToken.findOne({ token: refreshToken });
+
+  if (!storedToken) {
+    return res.status(401).json({ error: true, message: 'Token no encontrado' });
+  }
+
+  // Detectar reutilización de token revocado (posible robo)
+  if (storedToken.revokedAt) {
+    // Revocar TODOS los tokens del usuario por seguridad
+    await RefreshToken.updateMany(
+      { user: storedToken.user },
+      { revokedAt: new Date() }
+    );
+    return res.status(401).json({ error: true, message: 'Token reutilizado - todas las sesiones revocadas' });
+  }
+
+  if (!storedToken.isActive()) {
+    return res.status(401).json({ error: true, message: 'Token expirado' });
+  }
+
+  // Revocar token actual
+  storedToken.revokedAt = new Date();
+  await storedToken.save();
+
+  // Generar nuevos tokens (rotación)
+  const user = await User.findById(storedToken.user);
+  const newAccessToken = generateAccessToken(user);
+  const newRefreshToken = generateRefreshToken();
+
+  await RefreshToken.create({
+    token: newRefreshToken,
+    user: user._id,
+    expiresAt: getRefreshTokenExpiry(),
+    createdByIp: req.ip
+  });
+
+  res.json({
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken
+  });
 };

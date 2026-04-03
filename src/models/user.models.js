@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import softDeletePlugin from "../plugins/softDelete.plugin.js";
 
 const userSchema = new mongoose.Schema(
     {
@@ -26,6 +27,14 @@ const userSchema = new mongoose.Schema(
 // Virtual (no se almacena, se calcula):
 // fullName → name + ' ' + lastName
 )
+
+userSchema.virtual('fullName').get(function() {
+  return this.name + ' ' + this.lastName;
+});
+
+userSchema.set('toJSON', { virtuals: true });
+
+userSchema.plugin(softDeletePlugin);
 
 const User = mongoose.model('User', userSchema);
 

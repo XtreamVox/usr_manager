@@ -1,8 +1,17 @@
 import { ApiError } from "../middleware/error-handler.middleware";
 import User from "../models/user.models";
-import { generateAccessToken, generateRefreshToken } from "../utils/handleJWT";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  refreshTokens,
+} from "../utils/handleJWT";
 import { compare, encrypt } from "../utils/handlePassword";
 import Company from "../models/company.models";
+import Storage from "../models/storage.model.js";
+import { once, EventEmitter } from "node:events";
+import RefreshToken from "../models/refreshToken.model.js";
+
+const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:3000";
 
 export async function getUsers(req, res) {
   const user_id = req.user._id;
@@ -30,7 +39,14 @@ export async function registerUser(req, res) {
   const refreshToken = generateRefreshToken();
 
   user.verificationCode = randomCode;
+  user.save();
 
+  await RefreshToken.create({
+    token: refreshToken,
+    user: user._id,
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 días
+    createdByIp: req.ip,
+  });
   const answer = {
     userData: {
       email: user.email,
@@ -41,7 +57,7 @@ export async function registerUser(req, res) {
     refreshToken: refreshToken,
   };
 
-  res.status(200).send(answer).json(answer);
+  res.status(200).json(answer);
 }
 
 // TODO: esquemas de Zod
@@ -53,9 +69,9 @@ export async function doubleStepVerification(req, res) {
 
   if (req.body.code == user.verificationCode) {
     await User.findByIdAndUpdate(user_id, { status: "verified" });
-    return res.status(200).json(user.req.body.code);
+    return res.status(200).json({ code: req.body.code });
   }
-  ApiError.badRequest("Código de verificación incorrecto");
+  throw ApiError.badRequest("Código de verificación incorrecto");
 }
 
 // TODO: esquemas de Zod
@@ -64,9 +80,19 @@ export async function doubleStepVerification(req, res) {
 export async function loginUser(req, res) {
   const { email, password } = req.body;
 
-  const user = await User.find({ email: email });
-  const checkPass = compare(password, user.password);
+  const user = await User.findOne({ email: email });
+  const checkPass = await compare(password, user.password);
   if (user && checkPass) {
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken();
+
+    await RefreshToken.create({
+      token: refreshToken,
+      user: user._id,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 días
+      createdByIp: req.ip,
+    });
+
     const answer = {
       userData: {
         email: user.email,
@@ -78,7 +104,7 @@ export async function loginUser(req, res) {
     };
     res.status(200).json(answer);
   } else {
-    ApiError.badRequest("Email o contraseña incorrectos");
+    throw ApiError.badRequest("Email o contraseña incorrectos");
   }
 }
 
@@ -117,11 +143,14 @@ export async function updateCompanyData(req, res) {
       address: user.address,
       isFreelance: isFreelance,
     });
+    user.company = company._id;
+    await user.save();
 
     return res.status(200).json(company);
   }
+  const company = await Company.findOne({ cif: cif });
 
-  if ((await !Company.find({ cif: cif }))) {
+  if (!company) {
     await Company.create({
       owner: _id,
       name: name,
@@ -131,15 +160,109 @@ export async function updateCompanyData(req, res) {
     });
     return res.status(200).json(company);
   } else {
-    let user = await User.findByIdAndUpdate(_id, {
-      company: company._id,
+    const user = await User.findByIdAndUpdate(_id, {
+      company: company,
       role: "guest",
     });
     return res.status(200).json(user);
   }
 }
 
-export async function updateCompanyLogo(req, res){
-  const {_id} = req.user;
+// TODO: validar que el usuario es admin de una compañía
+// TODO: entender multer
+export async function updateCompanyLogo(req, res) {
+  if (!req.file) {
+    return handleHttpError(res, "No se subió ningún archivo", 400);
+  }
 
+  const { filename, originalname, mimetype, size } = req.file;
+
+  const fileData = await Storage.create({
+    filename,
+    originalName: originalname,
+    url: `${PUBLIC_URL}/uploads/${filename}`,
+    mimetype,
+    size,
+  });
+
+  await Company.findByIdAndUpdate(req.user.company, { logo: fileData.url });
+
+  res.status(201).json({ data: fileData });
+}
+
+export async function refreshUserSession(req, res) {
+  const { refreshToken } = req.body;
+
+  const storedToken = await RefreshToken.findOne({ token: refreshToken });
+
+  if (storedToken && storedToken.isActive()) {
+    refreshTokens(req, res);
+  } else {
+    // TODO
+    ApiError.unauthorized("Token no válido");
+  }
+}
+
+export async function logOutUser(req, res) {
+  await RefreshToken.updateMany(
+    { user: req.user._id, revokedAt: null },
+    { revokedAt: new Date(), revokedByIp: req.ip },
+  );
+
+  res.json({ message: "Todas las sesiones cerradas" });
+}
+
+export async function deleteUser(req, res) {
+  const { _id } = req.user;
+  const { soft } = req.query;
+
+  if (soft === "true") {
+    await User.softDeleteById(_id);
+    res.status(200).json({ message: "Usuario eliminado (soft delete)" });
+  } else {
+    await User.hardDelete(_id);
+    res.status(200).json({ message: "Usuario eliminado" });
+  }
+}
+// TODO: validar que la contraseña pasada es distinta y cumple requisitos de seguridad (Zod refine)
+export async function changePassword(req, res) {
+  const { _id } = req.user;
+  const { currentPassword, newPassword } = req.body;
+
+  // Verificar contraseña actual
+  const user = await User.findById(_id);
+  const checkPass = compare(currentPassword, user.password);
+
+  if (checkPass) {
+    // Usar Zod .refine() para validar que la nueva contraseña sea diferente de la actual.
+    const HashedNewPassword = await encrypt(newPassword);
+    await User.findByIdAndUpdate(_id, { password: HashedNewPassword });
+    res.status(200).json({ message: "Contraseña actualizada" });
+  }
+}
+
+export async function inviteUser(req, res) {
+  if (req.user.role !== "admin") {
+    return res
+      .status(403)
+      .json({ message: "Acceso denegado. Solo administradores." });
+  }
+  const eventEmitter = new EventEmitter();
+  const { email, name, lastName } = req.body;
+
+  const newUser = await User.create({
+    name,
+    lastName,
+    email,
+    company: req.user.company,
+    role: "guest",
+    status: "invited", // Opcional: para saber que no ha activado su cuenta
+  });
+
+  eventEmitter.emit("user:invited", newUser);
+
+  res.status(201).json({
+    message: "Usuario invitado con éxito",
+    user: newUser,
+  });
 }
