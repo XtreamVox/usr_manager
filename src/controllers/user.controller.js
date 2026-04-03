@@ -133,9 +133,9 @@ export async function updateCompanyData(req, res) {
   const { _id } = req.user;
 
   const { name, cif, address, isFreelance } = req.body;
+  const user = await User.findById(_id);
 
   if (isFreelance) {
-    const user = await User.findById(_id);
     const company = await Company.create({
       owner: user._id,
       name: user.name,
@@ -151,14 +151,17 @@ export async function updateCompanyData(req, res) {
   const company = await Company.findOne({ cif: cif });
 
   if (!company) {
-    await Company.create({
+    const new_company = await Company.create({
       owner: _id,
       name: name,
       cif: cif,
       address: address,
       isFreelance: isFreelance,
     });
-    return res.status(200).json(company);
+    user.company = new_company._id;
+    await user.save();
+
+    return res.status(200).json(new_company);
   } else {
     const user = await User.findByIdAndUpdate(_id, {
       company: company,
@@ -199,7 +202,7 @@ export async function refreshUserSession(req, res) {
     refreshTokens(req, res);
   } else {
     // TODO
-    ApiError.unauthorized("Token no válido");
+    // ApiError.unauthorized("Token no válido");
   }
 }
 
@@ -247,16 +250,16 @@ export async function inviteUser(req, res) {
       .status(403)
       .json({ message: "Acceso denegado. Solo administradores." });
   }
-  const eventEmitter = new EventEmitter();
   const { email, name, lastName } = req.body;
-
+  const password = 123456; // Generar contraseña temporal o código de verificación
   const newUser = await User.create({
     name,
+    password: await encrypt(password.toString()),
     lastName,
     email,
     company: req.user.company,
     role: "guest",
-    status: "invited", // Opcional: para saber que no ha activado su cuenta
+    status: "pending", // Opcional: para saber que no ha activado su cuenta
   });
 
   eventEmitter.emit("user:invited", newUser);

@@ -2,6 +2,7 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'node:crypto';
 import User from '../models/user.models.js';
+import RefreshToken from '../models/refreshToken.models.js';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const ACCESS_TOKEN_EXPIRES = '15m';  // Corto

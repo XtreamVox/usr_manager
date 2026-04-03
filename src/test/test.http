@@ -3,13 +3,12 @@
 ### =========================
 ### TOKENS
 ### =========================
-@token_admin = 
-@token_guest = 
-@token_freelance = 
-
-@refresh_admin = 
-@refresh_guest = 
-@refresh_freelance = 
+@token_admin = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2OWQwNDg0YjZjMGU4NmE0MzcxNDMzNWMiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzUyNTc2NzUsImV4cCI6MTc3NTI1ODU3NX0.qE7ifW51d4swB-xehpLYX2uy9026Hkfnku3inRn5_K8
+@token_guest = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2OWQwM2QzMjcwMjkwMWVjMzMxMGE4OTIiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzUyNTQ4MzQsImV4cCI6MTc3NTI1NTczNH0.jrvqPkCstn5RQzRrjaDeuIdNofeS8SEqLpuSZnMDh9M
+@token_freelance = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2OWQwM2Q0ZTcwMjkwMWVjMzMxMGE4OTciLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzUyNTQ4NjIsImV4cCI6MTc3NTI1NTc2Mn0.F_Lgxrnv1BNkJMH7C56YZA1vCsvbiUk-uRUDfDXqrHA
+@refresh_admin = 6302c9f64fcac288faebf86aff35ba1a679ca95a0ecd6fbb2c3288cc564b50315f7c14e162c9ed42e24c0f50caee9ce800f0701b9b02d6b97827b6d968ec43df
+@refresh_guest = 7d52c700805e0aa235dbc33e174574d344808e4091475fbfd58008d53d4ab18b38287e8cb43ba39bcfb574c53cab16f58c861ec820b189c771eb113556ae0300
+@refresh_freelance = 0e01c51b95ba358ce339f237279af6e20279cb0eb15c3d08811449eb0a7b6df6232503d33bcd7c5e16c39d61a99a31515186332bd42b76fb2dd3ebd34e1eb080
 
 ### =========================
 ### 1. REGISTER (3 usuarios)
@@ -99,7 +98,26 @@ Content-Type: application/json
   "lastName": "Pérez",
   "nif": "12345678A"
 }
+### Datos personales (freelance)
+PUT {{baseUrl}}/api/user/register
+Authorization: Bearer {{token_freelance}}
+Content-Type: application/json
 
+{
+  "name": "Gonzalo",
+  "lastName": "Lorca",
+  "nif": "87654321B"
+}
+### Datos personales (guest)
+PUT {{baseUrl}}/api/user/register
+Authorization: Bearer {{token_guest}}
+Content-Type: application/json
+
+{
+  "name": "Victor",
+  "lastName": "Serrano",
+  "nif": "76567892C"
+}
 ### Crear empresa (admin owner)
 PATCH {{baseUrl}}/api/user/company
 Authorization: Bearer {{token_admin}}
