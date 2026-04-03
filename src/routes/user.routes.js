@@ -17,8 +17,6 @@ import {
 
 const router = Router();
 
-router.use("/");
-
 router.post("/register", registerUser);
 router.put("/validation", authMiddleware, doubleStepVerification)
 router.post("/login", loginUser);

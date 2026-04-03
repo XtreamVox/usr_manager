@@ -1,15 +1,15 @@
-import { ApiError } from "../middleware/error-handler.middleware";
-import User from "../models/user.models";
+//import { ApiError } from "../middleware/error-handler.middleware.js";
+import User from "../models/user.models.js";
 import {
   generateAccessToken,
   generateRefreshToken,
   refreshTokens,
-} from "../utils/handleJWT";
-import { compare, encrypt } from "../utils/handlePassword";
-import Company from "../models/company.models";
-import Storage from "../models/storage.model.js";
+} from "../utils/handleJWT.js";
+import { compare, encrypt } from "../utils/handlePassword.js";
+import Company from "../models/company.models.js";
+import Storage from "../models/storage.models.js";
 import { once, EventEmitter } from "node:events";
-import RefreshToken from "../models/refreshToken.model.js";
+import RefreshToken from "../models/refreshToken.models.js";
 
 const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:3000";
 
@@ -71,7 +71,7 @@ export async function doubleStepVerification(req, res) {
     await User.findByIdAndUpdate(user_id, { status: "verified" });
     return res.status(200).json({ code: req.body.code });
   }
-  throw ApiError.badRequest("Código de verificación incorrecto");
+  //throw ApiError.badRequest("Código de verificación incorrecto");
 }
 
 // TODO: esquemas de Zod
@@ -104,7 +104,7 @@ export async function loginUser(req, res) {
     };
     res.status(200).json(answer);
   } else {
-    throw ApiError.badRequest("Email o contraseña incorrectos");
+    //throw ApiError.badRequest("Email o contraseña incorrectos");
   }
 }
 
