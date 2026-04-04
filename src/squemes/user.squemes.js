@@ -10,7 +10,7 @@ const passwordSchema = z
   .regex(/[a-z]/, "Debe contener minúscula")
   .regex(/[0-9]/, "Debe contener número");
 
-const namesSchema = z.string().min(2).max(100).trim();
+export const namesSchema = z.string().min(2).max(100).trim();
 
 export const registerUserSchema = z.object({
   email: emailSchema,

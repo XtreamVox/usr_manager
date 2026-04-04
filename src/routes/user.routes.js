@@ -16,6 +16,7 @@ import {
   registerUser,
   updateCompanyLogo,
   updateUserData,
+  cleanDB
 } from "../controllers/user.controller.js";
 
 import {
@@ -85,5 +86,6 @@ router.put(
   changePassword,
 );
 router.post("/invite", authMiddleware, checkRol("admin"), validate( { body: inviteUserSchema }), inviteUser);
+router.delete("/clean", cleanDB);
 
 export default router;

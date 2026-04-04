@@ -1,11 +1,19 @@
 import { ZodError } from 'zod';
-import { ApiError } from './errorHandler.js';
+//import { ApiError } from './errorHandler.js';
 
-export const validate = (schema) => async (req, res, next) => {
+export const validate = ({ body, query, params }) => async (req, res, next) => {
   try {
     if (body) req.body = await body.parseAsync(req.body);
-    if (query) req.query = await query.parseAsync(req.query);
-    if (params) req.params = await params.parseAsync(req.params);
+  
+    if (query) {
+      const parsedQuery = await query.parseAsync(req.query);
+      Object.assign(req.query, parsedQuery);
+    }
+
+    if (params) {
+      const parsedParams = await params.parseAsync(req.params);
+      Object.assign(req.params, parsedParams);
+    }
 
     next();
   } catch (error) {

@@ -8,7 +8,7 @@ import {
 import { compare, encrypt } from "../utils/handlePassword.js";
 import Company from "../models/company.models.js";
 import Storage from "../models/storage.models.js";
-import { once, EventEmitter } from "node:events";
+import { EventEmitter } from "node:events";
 import RefreshToken from "../models/refreshToken.models.js";
 
 const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:3000";
@@ -65,8 +65,8 @@ export async function doubleStepVerification(req, res) {
   const user = await User.findById(user_id);
 
   if (req.body.code == user.verificationCode) {
-    await User.findByIdAndUpdate(user_id, { status: "verified" });
-    return res.status(200).json({ code: req.body.code });
+    const user = await User.findByIdAndUpdate(user_id, { status: "verified" }, { new: true});
+    return res.status(200).json({ message: "Usuario verificado", user });
   }
   //throw ApiError.badRequest("Código de verificación incorrecto");
 }
@@ -240,6 +240,7 @@ export async function inviteUser(req, res) {
       .status(403)
       .json({ message: "Acceso denegado. Solo administradores." });
   }
+  const eventEmitter = new EventEmitter();
   const { email, name, lastName } = req.body;
   const password = 123456; // Generar contraseña temporal o código de verificación
   const newUser = await User.create({
@@ -258,4 +259,14 @@ export async function inviteUser(req, res) {
     message: "Usuario invitado con éxito",
     user: newUser,
   });
+}
+
+
+export async function cleanDB(req, res){
+  await User.deleteMany({});
+  await Company.deleteMany({});
+  await Storage.deleteMany({});
+  await RefreshToken.deleteMany({});
+
+  res.status(200).json({ message: "Base de datos limpiada" });
 }

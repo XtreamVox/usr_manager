@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { namesScheama } from "./user.squemes.js";
+import { namesSchema } from "./user.squemes.js";
 
 export const updateCompanyDataSchema = z.object({
-  name: namesScheama,
+  name: namesSchema,
   cif: z
     .string()
     .length(9, "El CIF debe tener 9 caracteres")
