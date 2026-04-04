@@ -13,7 +13,7 @@ import RefreshToken from "../models/refreshToken.models.js";
 
 const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:3000";
 
-export async function getUsers(req, res) {
+export async function getUser(req, res) {
   const user_id = req.user._id;
 
   const user = await User.findById(user_id).populate("company");
@@ -21,8 +21,6 @@ export async function getUsers(req, res) {
   res.status(200).json(user);
 }
 
-// TODO: El encrypt puede ser un middleware.
-// TODO: Gestión de ZOD
 
 export async function registerUser(req, res) {
   const { password } = req.body;
@@ -60,7 +58,6 @@ export async function registerUser(req, res) {
   res.status(200).json(answer);
 }
 
-// TODO: esquemas de Zod
 // TODO: middleware para restar trys y bloquear al usuario si llega a 0
 export async function doubleStepVerification(req, res) {
   const user_id = req.user._id;
@@ -74,9 +71,7 @@ export async function doubleStepVerification(req, res) {
   //throw ApiError.badRequest("Código de verificación incorrecto");
 }
 
-// TODO: esquemas de Zod
 // TODO: Hacer ApiError para badRequest
-// ASK: Si no ha iniciado sesión. Tiene token?
 export async function loginUser(req, res) {
   const { email, password } = req.body;
 
@@ -108,10 +103,8 @@ export async function loginUser(req, res) {
   }
 }
 
-// TODO: validación Zod
 export async function updateUserData(req, res) {
   const { _id } = req.user;
-  // ASK: estos datos no deberian estar ya en User según lo que he hecho en register???
   const { name, lastName, nif } = req.body;
 
   // Actualizar usuario con nuevos datos
@@ -128,7 +121,6 @@ export async function updateUserData(req, res) {
   res.status(200).json(user);
 }
 
-// TODO: validación de Zod
 export async function updateCompanyData(req, res) {
   const { _id } = req.user;
 
@@ -171,8 +163,6 @@ export async function updateCompanyData(req, res) {
   }
 }
 
-// TODO: validar que el usuario es admin de una compañía
-// TODO: entender multer
 export async function updateCompanyLogo(req, res) {
   if (!req.file) {
     // return handleHttpError(res, "No se subió ningún archivo", 400);
@@ -220,7 +210,7 @@ export async function deleteUser(req, res) {
   const { _id } = req.user;
   const { soft } = req.query;
 
-  if (soft === "true") {
+  if (soft) {
     await User.softDeleteById(_id);
     res.status(200).json({ message: "Usuario eliminado (soft delete)" });
   } else {
@@ -228,7 +218,6 @@ export async function deleteUser(req, res) {
     res.status(200).json({ message: "Usuario eliminado" });
   }
 }
-// TODO: validar que la contraseña pasada es distinta y cumple requisitos de seguridad (Zod refine)
 export async function changePassword(req, res) {
   const { _id } = req.user;
   const { currentPassword, newPassword } = req.body;
