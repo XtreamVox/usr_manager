@@ -175,7 +175,8 @@ export async function updateCompanyData(req, res) {
 // TODO: entender multer
 export async function updateCompanyLogo(req, res) {
   if (!req.file) {
-    return handleHttpError(res, "No se subió ningún archivo", 400);
+    // return handleHttpError(res, "No se subió ningún archivo", 400);
+    return console.log("fck");
   }
 
   const { filename, originalname, mimetype, size } = req.file;
@@ -188,7 +189,7 @@ export async function updateCompanyLogo(req, res) {
     size,
   });
 
-  await Company.findByIdAndUpdate(req.user.company, { logo: fileData.url });
+  await Company.findByIdAndUpdate(req.user.company, { logo: fileData.url }, { new: true});
 
   res.status(201).json({ data: fileData });
 }

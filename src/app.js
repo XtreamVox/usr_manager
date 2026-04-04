@@ -8,7 +8,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(helmet());
-
+app.use("/uploads", express.static("uploads"));
 app.use('/api/user', router);
 
 const PORT = process.env.PORT || 3000;

@@ -8,7 +8,7 @@ const __dirname = import.meta.dirname;
 // Configuración de almacenamiento
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = join(__dirname, '../../storage');
+    const uploadPath = join(__dirname, '../../uploads');
     cb(null, uploadPath);
   },
   filename: (req, file, cb) => {

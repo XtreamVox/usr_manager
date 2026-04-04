@@ -1,4 +1,5 @@
 import { Router } from "express";
+import uploadMiddleware from "../utils/handleStorage.utils.js";
 import authMiddleware from "../middleware/auth.midddleware.js";
 import {
   getUsers,
@@ -15,6 +16,8 @@ import {
   updateUserData,
 } from "../controllers/user.controller.js";
 
+// TODO: AuthMiddleware no refresca el accessToken con el refresh token, revisar la lógica de refresco
+
 const router = Router();
 
 router.post("/register", registerUser);
@@ -22,7 +25,7 @@ router.put("/validation", authMiddleware, doubleStepVerification)
 router.post("/login", loginUser);
 router.put("/register", authMiddleware, updateUserData);
 router.patch("/company", authMiddleware, updateCompanyData);
-router.patch("/logo", authMiddleware, updateCompanyLogo);
+router.patch("/logo", authMiddleware,uploadMiddleware.single("logo") ,updateCompanyLogo);
 router.get("/", authMiddleware, getUsers);
 router.post("/refresh", refreshUserSession);
 router.post("/logout", authMiddleware, logOutUser);
