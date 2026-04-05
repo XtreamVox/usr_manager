@@ -1,5 +1,6 @@
 import { ZodError } from 'zod';
-//import { ApiError } from './errorHandler.js';
+// ASK: Import correcto de AppError
+import { AppError } from '../utils/AppError.js';
 
 export const validate = ({ body, query, params }) => async (req, res, next) => {
   try {
@@ -18,14 +19,13 @@ export const validate = ({ body, query, params }) => async (req, res, next) => {
     next();
   } catch (error) {
     if (error instanceof ZodError) {
-      const errors = error.issues.map((err) => ({
-        campo: err.path.join('.'),
-        mensaje: err.message,
+      const details = error.issues.map((err) => ({
+        field: err.path.join('.'),
+        message: err.message,
       }));
 
-      // TODO hacer ApiError
-      //return ApiError.badRequest("Error de validación", errors);
-      return console.log(errors);
+      // ASK: Pasar error al middleware de error con next()
+      return next(AppError.validation("Error de validación", details));
     }
     next(error);
   }
@@ -33,18 +33,22 @@ export const validate = ({ body, query, params }) => async (req, res, next) => {
 
 // Middleware para validar archivo
 export const validateFile = (schema) => (req, res, next) => {
-  if (!req.file) {
-    return res.status(400).json({ error: true, message: "Archivo requerido" });
+  try {
+    // ASK: Validación de archivo requerido
+    if (!req.file) {
+      throw AppError.badRequest("Archivo requerido");
+    }
+
+    const result = schema.safeParse(req.file);
+
+    // ASK: Validación del esquema del archivo
+    if (!result.success) {
+      throw AppError.badRequest(result.error.errors[0].message);
+    }
+
+    next();
+  } catch (error) {
+    // ASK: Pasar error al middleware de error
+    next(error);
   }
-
-  const result = schema.safeParse(req.file);
-
-  if (!result.success) {
-    return res.status(400).json({
-      error: true,
-      message: result.error.errors[0].message,
-    });
-  }
-
-  next();
 };

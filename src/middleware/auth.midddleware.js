@@ -1,6 +1,7 @@
 // src/middleware/session.middleware.js
 import User from "../models/user.models.js";
-import { handleHttpError } from "../utils/handleError.js";
+// ASK: Import correcto de AppError
+import { AppError } from "../utils/AppError.js";
 import { verifyAccessToken } from "../utils/handleJWT.js";
 
 /**
@@ -11,8 +12,8 @@ const authMiddleware = async (req, res, next) => {
   try {
     // Verificar que existe el header Authorization
     if (!req.headers.authorization) {
-      handleHttpError(res, "NOT_TOKEN", 401);
-      return;
+      // ASK: Lanzar error en lugar de solo retornar
+      throw AppError.unauthorized("No se proporcionó token");
     }
 
     // Extraer token: "Bearer eyJhbG..." -> "eyJhbG..."
@@ -22,16 +23,16 @@ const authMiddleware = async (req, res, next) => {
     const dataToken = await verifyAccessToken(token);
 
     if (!dataToken || !dataToken._id) {
-      handleHttpError(res, "ERROR_ID_TOKEN", 401);
-      return;
+      // ASK: Lanzar error en lugar de solo retornar
+      throw AppError.unauthorized("Token inválido");
     }
 
     // Buscar usuario y añadirlo a req
     const user = await User.findById(dataToken._id);
 
     if (!user) {
-      handleHttpError(res, "USER_NOT_FOUND", 401);
-      return;
+      // ASK: Lanzar error en lugar de solo retornar
+      throw AppError.notFound("Usuario");
     }
 
     // Inyectar usuario en la petición
@@ -39,7 +40,8 @@ const authMiddleware = async (req, res, next) => {
 
     next();
   } catch (err) {
-    handleHttpError(res, "NOT_SESSION", 401);
+    // ASK: Pasar error al middleware de error
+    next(err);
   }
 };
 

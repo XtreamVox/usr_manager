@@ -4,6 +4,7 @@ import { AppError } from '../utils/AppError.js';
 
 /**
  * Middleware para rutas no encontradas
+ * // ASK: Debe ir antes del errorHandler
  */
 export const notFound = (req, res, next) => {
   next(AppError.notFound(`Ruta ${req.method} ${req.originalUrl}`));
@@ -14,7 +15,7 @@ export const notFound = (req, res, next) => {
  */
 export const errorHandler = (err, req, res, next) => {
   console.error('❌ Error:', err.message);
-  
+
   // Error operacional (esperado)
   if (err.isOperational) {
     return res.status(err.statusCode).json({

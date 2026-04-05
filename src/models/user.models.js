@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
+      select: false,
     }, // Cifrada con bcrypt
     name: String, // Nombre
     lastName: String, // Apellidos
