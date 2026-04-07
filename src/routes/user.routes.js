@@ -49,7 +49,7 @@ router.post("/login", validate({ body: loginUserSchema }), loginUser);
 router.put(
   "/register",
   authMiddleware,
-  checkStatus(""),
+  checkStatus("verified"),
   validate({ body: updateUserDataSchema }),
   updateUserData,
 );

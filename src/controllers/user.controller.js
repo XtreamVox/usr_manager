@@ -41,7 +41,7 @@ export async function registerUser(req, res, next) {
     user.createdAt = new Date();
 
 
-    const randomCode = randomBytes(6).toString("hex");
+    const randomCode = Math.floor(100000 + Math.random() * 900000).toString();
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken();
 
@@ -120,7 +120,7 @@ export async function loginUser(req, res, next) {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email: email });
+    const user = await User.findOne({ email: email }).select("+password");
 
     if (!user) {
       throw AppError.badRequest("Email o contraseña incorrectos");
@@ -340,7 +340,7 @@ export async function changePassword(req, res, next) {
     const { _id } = req.user;
     const { currentPassword, newPassword } = req.body;
 
-    const user = await User.findById(_id);
+    const user = await User.findById(_id).select("+password");
 
     if (!user) {
       throw AppError.notFound("Usuario");
@@ -369,8 +369,7 @@ export async function inviteUser(req, res, next) {
       throw AppError.forbidden("Acceso denegado. Solo administradores.");
     }
 
-    const { email, name, lastName } = req.body;
-    const password = 123456;
+    const { email, name, lastName, password } = req.body;
 
     const newUser = await User.create({
       name,

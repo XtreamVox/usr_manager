@@ -64,4 +64,7 @@ export const deleteUserSchema = z.object({
 
 export const inviteUserSchema = z.object({
   email: emailSchema,
+  name: namesSchema,
+  lastName: namesSchema,
+  password: passwordSchema,
 });
