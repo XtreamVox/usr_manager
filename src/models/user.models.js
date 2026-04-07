@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema(
       required: true,
       lowercase: true,
       index: true,
+      unique: true,
     }, // Único (index: unique), validado con Zod
     password: {
       type: String,

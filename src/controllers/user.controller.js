@@ -8,8 +8,9 @@ import {
 import { compare, encrypt } from "../utils/handlePassword.js";
 import Company from "../models/company.models.js";
 import Storage from "../models/storage.models.js";
-import { EventEmitter } from "node:events";
+import eventEmitter, { EVENTS } from "../services/event.service.js";
 import RefreshToken from "../models/refreshToken.models.js";
+import { randomBytes } from "node:crypto";
 
 const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:3000";
 
@@ -39,13 +40,23 @@ export async function registerUser(req, res, next) {
     const user = await User.create(req.body);
     user.createdAt = new Date();
 
-    const randomCode = "123456";
+
+    const randomCode = randomBytes(6).toString("hex");
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken();
 
     user.verificationCode = randomCode;
+    user.status = "pending";
 
     await user.save();
+
+    eventEmitter.emit(EVENTS.USER_REGISTERED, {
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      status: user.status,
+      timestamp: new Date().toISOString(),
+    });
 
     await RefreshToken.create({
       token: refreshToken,
@@ -74,7 +85,7 @@ export async function doubleStepVerification(req, res, next) {
   try {
     const user_id = req.user._id;
     const user = await User.findById(user_id);
-    
+
     if (!user) {
       throw AppError.notFound("Usuario");
     }
@@ -85,6 +96,13 @@ export async function doubleStepVerification(req, res, next) {
 
     if (req.body.code == user.verificationCode) {
       const updatedUser = await User.findByIdAndUpdate(user_id, { status: "verified" }, { new: true});
+
+      eventEmitter.emit(EVENTS.USER_VERIFIED, {
+        email: updatedUser.email,
+        verifiedAt: updatedUser.updatedAt?.toISOString() || new Date().toISOString(),
+        timestamp: new Date().toISOString(),
+      });
+
       return res.status(200).json({ message: "Usuario verificado", user: updatedUser });
     }
 
@@ -108,11 +126,17 @@ export async function loginUser(req, res, next) {
       throw AppError.badRequest("Email o contraseña incorrectos");
     }
 
+    if (user.status === "pending"){
+      throw AppError.unauthorized("Usuario pendiente de verificación");
+    }
+
     const checkPass = await compare(password, user.password);
 
     if (!checkPass) {
       throw AppError.badRequest("Email o contraseña incorrectos");
     }
+    
+
 
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken();
@@ -286,13 +310,25 @@ export async function deleteUser(req, res, next) {
     const { _id } = req.user;
     const { soft } = req.query;
 
+    const user = await User.findById(_id);
+    const userEmail = user?.email;
+
+    const deleteType = soft ? "soft" : "hard";
+
     if (soft) {
       await User.softDeleteById(_id);
-      res.status(200).json({ message: "Usuario eliminado (soft delete)" });
     } else {
       await User.hardDelete(_id);
-      res.status(200).json({ message: "Usuario eliminado" });
     }
+
+    eventEmitter.emit(EVENTS.USER_DELETED, {
+      email: userEmail,
+      deletedAt: new Date().toISOString(),
+      deleteType: deleteType,
+      timestamp: new Date().toISOString(),
+    });
+
+    res.status(200).json({ message: `Usuario eliminado (${deleteType} delete)` });
   } catch (error) {
 
     next(error);
@@ -333,7 +369,6 @@ export async function inviteUser(req, res, next) {
       throw AppError.forbidden("Acceso denegado. Solo administradores.");
     }
 
-    const eventEmitter = new EventEmitter();
     const { email, name, lastName } = req.body;
     const password = 123456;
 
@@ -347,7 +382,12 @@ export async function inviteUser(req, res, next) {
       status: "pending",
     });
 
-    eventEmitter.emit("user:invited", newUser);
+    eventEmitter.emit(EVENTS.USER_INVITED, {
+      email: newUser.email,
+      invitedBy: req.user.email,
+      invitedAt: newUser.createdAt.toISOString(),
+      timestamp: new Date().toISOString(),
+    });
 
     res.status(201).json({
       message: "Usuario invitado con éxito",

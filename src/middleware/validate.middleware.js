@@ -1,5 +1,4 @@
 import { ZodError } from 'zod';
-// ASK: Import correcto de AppError
 import { AppError } from '../utils/AppError.js';
 
 export const validate = ({ body, query, params }) => async (req, res, next) => {
@@ -24,7 +23,6 @@ export const validate = ({ body, query, params }) => async (req, res, next) => {
         message: err.message,
       }));
 
-      // ASK: Pasar error al middleware de error con next()
       return next(AppError.validation("Error de validación", details));
     }
     next(error);
@@ -34,21 +32,18 @@ export const validate = ({ body, query, params }) => async (req, res, next) => {
 // Middleware para validar archivo
 export const validateFile = (schema) => (req, res, next) => {
   try {
-    // ASK: Validación de archivo requerido
     if (!req.file) {
       throw AppError.badRequest("Archivo requerido");
     }
 
     const result = schema.safeParse(req.file);
 
-    // ASK: Validación del esquema del archivo
     if (!result.success) {
       throw AppError.badRequest(result.error.errors[0].message);
     }
 
     next();
   } catch (error) {
-    // ASK: Pasar error al middleware de error
     next(error);
   }
 };

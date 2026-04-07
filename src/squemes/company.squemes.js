@@ -1,30 +1,41 @@
 import { z } from "zod";
 import { namesSchema } from "./user.squemes.js";
 
-export const updateCompanyDataSchema = z.object({
-  name: namesSchema,
-  cif: z
+const addressSchema = z.object({
+  street: z.string().min(1, "La calle es requerida"),
+  number: z.string().min(1, "El número es requerido"),
+  postal: z
     .string()
-    .length(9, "El CIF debe tener 9 caracteres")
-    .regex(
-      /^[A-Za-z][0-9]{7}[A-Za-z0-9]$/,
-      "El CIF debe tener una letra seguida de 7 números y un dígito o letra final",
-    )
-    .transform((val) => val.toUpperCase()),
-
-  address: z.object({
-    street: z.string().min(1),
-    number: z.string().min(1),
-    postal: z
-      .string()
-      .length(5, "El código postal debe tener 5 dígitos")
-      .regex(/^[0-9]+$/, "El código postal debe contener solo números"),
-    city: z.string().min(1),
-    province: z.string().min(1),
-  }),
-  isFreelance: z.boolean(),
+    .length(5, "El código postal debe tener 5 dígitos")
+    .regex(/^[0-9]+$/, "El código postal debe contener solo números"),
+  city: z.string().min(1, "La ciudad es requerida"),
+  province: z.string().min(1, "La provincia es requerida"),
 });
 
+const cifSchema = z
+  .string()
+  .length(9, "El CIF debe tener 9 caracteres")
+  .regex(
+    /^[A-Za-z][0-9]{7}[A-Za-z0-9]$/,
+    "El CIF debe tener una letra seguida de 7 números y un dígito o letra final",
+  )
+  .transform((val) => val.toUpperCase());
+
+const freelanceOnboardingSchema = z.object({
+  isFreelance: z.literal(true),
+});
+
+const companyOnboardingSchema = z.object({
+  isFreelance: z.literal(false),
+  name: namesSchema,
+  cif: cifSchema,
+  address: addressSchema,
+});
+
+export const updateCompanyDataSchema = z.discriminatedUnion('isFreelance', [
+  freelanceOnboardingSchema,
+  companyOnboardingSchema,
+]);
 
 export const updateCompanyLogoSchema = z.object({
   fieldname: z.string().min(1, "El campo del archivo es requerido"),

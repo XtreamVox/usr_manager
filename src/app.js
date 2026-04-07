@@ -5,6 +5,7 @@ import limiter from './middleware/rateLimit.middleware.js';
 import { join } from 'node:path';
 import router from './routes/user.routes.js';
 import { errorHandler, notFound } from './middleware/error-handler.middleware.js';
+import { initializeNotificationListeners } from './services/notification.service.js';
 
 const app = express();
 
@@ -17,12 +18,14 @@ app.use(sanitizeBody);
 
 app.use(limiter);
 
+initializeNotificationListeners();
+
 app.use('/uploads', express.static(join(import.meta.dirname, '../uploads')));
 
 app.use('/api/user', router);
 
-app.use(errorHandler);
-
 app.use(notFound);
+
+app.use(errorHandler);
 
 export default app;

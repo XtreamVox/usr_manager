@@ -2,6 +2,7 @@ import { Router } from "express";
 import uploadMiddleware from "../utils/handleStorage.utils.js";
 import authMiddleware from "../middleware/auth.midddleware.js";
 import checkRol from "../middleware/role.middleware.js";
+import checkStatus from "../middleware/status.middleware.js";
 import { validateFile, validate } from "../middleware/validate.middleware.js";
 import {
   getUser,
@@ -16,7 +17,7 @@ import {
   registerUser,
   updateCompanyLogo,
   updateUserData,
-  cleanDB
+  cleanDB,
 } from "../controllers/user.controller.js";
 
 import {
@@ -27,7 +28,7 @@ import {
   loginUserSchema,
   refreshUserSessionSchema,
   deleteUserSchema,
-  inviteUserSchema
+  inviteUserSchema,
 } from "../squemes/user.squemes.js";
 
 import {
@@ -48,12 +49,14 @@ router.post("/login", validate({ body: loginUserSchema }), loginUser);
 router.put(
   "/register",
   authMiddleware,
+  checkStatus(""),
   validate({ body: updateUserDataSchema }),
   updateUserData,
 );
 router.patch(
   "/company",
   authMiddleware,
+  checkStatus("verified"),
   validate({ body: updateCompanyDataSchema }),
   updateCompanyData,
 );
@@ -62,30 +65,40 @@ router.patch(
   "/logo",
   authMiddleware,
   checkRol("admin"),
+  checkStatus("verified"),
   uploadMiddleware.single("logo"),
   validateFile(updateCompanyLogoSchema),
   updateCompanyLogo,
 );
-router.get("/", authMiddleware, getUser);
+router.get("/", authMiddleware, checkStatus("verified"), getUser);
 router.post(
   "/refresh",
   validate({ body: refreshUserSessionSchema }),
   refreshUserSession,
 );
-router.post("/logout", authMiddleware, logOutUser);
+router.post("/logout", authMiddleware, checkStatus("verified"), logOutUser);
 router.delete(
   "/",
   authMiddleware,
+  checkStatus("verified"),
   validate({ query: deleteUserSchema }),
   deleteUser,
 );
 router.put(
   "/password",
   authMiddleware,
+  checkStatus("verified"),
   validate({ body: changeUserPasswordSchema }),
   changePassword,
 );
-router.post("/invite", authMiddleware, checkRol("admin"), validate( { body: inviteUserSchema }), inviteUser);
+router.post(
+  "/invite",
+  authMiddleware,
+  checkRol("admin"),
+  checkStatus("verified"),
+  validate({ body: inviteUserSchema }),
+  inviteUser,
+);
 router.delete("/clean", cleanDB);
 
 export default router;
