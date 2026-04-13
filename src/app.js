@@ -6,12 +6,20 @@ import { join } from 'node:path';
 import router from './routes/user.routes.js';
 import { errorHandler, notFound } from './middleware/error-handler.middleware.js';
 import { initializeNotificationListeners } from './services/notification.service.js';
+import morganBody from 'morgan-body';
+import { loggerStream } from './utils/handleLogger.js';
 
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Después de express.json(), antes de las rutas
+morganBody(app, {
+  noColors: true,
+  skip: (req, res) => res.statusCode < 400, // Solo errores
+  stream: loggerStream
+});
 app.use(helmet());
 
 app.use(sanitizeBody);
