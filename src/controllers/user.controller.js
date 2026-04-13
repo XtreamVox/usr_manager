@@ -11,6 +11,7 @@ import Storage from "../models/storage.models.js";
 import eventEmitter, { EVENTS } from "../services/event.service.js";
 import RefreshToken from "../models/refreshToken.models.js";
 import { randomBytes } from "node:crypto";
+import { sendSlackNotification } from "../utils/handleLogger.js";
 
 const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:3000";
 
@@ -74,7 +75,7 @@ export async function registerUser(req, res, next) {
       accessToken: accessToken,
       refreshToken: refreshToken,
     };
-
+    await sendSlackNotification(`📢 Nuevo usuario registrado: ${user.email} (${user.role})`);
     res.status(200).json(answer);
   } catch (error) {
     next(error);
