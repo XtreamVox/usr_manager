@@ -3,7 +3,7 @@ import helmet from 'helmet';
 import { sanitizeBody } from './middleware/sanitize.middleware.js';
 import limiter from './middleware/rateLimit.middleware.js';
 import { join } from 'node:path';
-import router from './routes/user.routes.js';
+import router from './routes/index.js';
 import { errorHandler, notFound } from './middleware/error-handler.middleware.js';
 import { initializeNotificationListeners } from './services/notification.service.js';
 import morganBody from 'morgan-body';
@@ -30,7 +30,7 @@ initializeNotificationListeners();
 
 app.use('/uploads', express.static(join(import.meta.dirname, '../uploads')));
 
-app.use('/api/user', router);
+app.use('/api', router);
 
 app.use(notFound);
 
