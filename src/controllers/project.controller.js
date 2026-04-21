@@ -10,10 +10,8 @@ export default function createProject(req, res, next) {
 
     const userDoc = User.findById(user);
     const clientDoc = Client.findById(client);
-    if (userDoc.company != company)
-      throw AppError.badRequest("El usuario debe pertenecer a la company");
-    if (clientDoc.company != company)
-      throw AppError.badRequest("El cliente debe pertenecer a la company");
+    if (userDoc.company != company) throw AppError.badRequest("El usuario debe pertenecer a la company");
+    if (clientDoc.company != company) throw AppError.badRequest("El cliente debe pertenecer a la company");
 
     const project = Project.create({
       user: user,
@@ -29,7 +27,10 @@ export default function createProject(req, res, next) {
 export default function updateProject(req, res, next) {
     try {
         const { id } = req.params;
+        const project = Project.findByIdAndUpdate(id, req.body);
 
+        
+        res.status(200).json(project)
     } catch (error) {
         next(error)
     }
@@ -118,3 +119,4 @@ export async function restoreArchivedProjectById(req, res, next) {
     next(error);
   }
 }
+
