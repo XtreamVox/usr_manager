@@ -1,4 +1,4 @@
-import transporter from "../config/emailSender.js";
+import { transporter } from "../config/emailSender.js";
 
 export async function sendVerificationEmail(to, code, name) {
   const mailOptions = {
