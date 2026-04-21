@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-
+import { softDeletePlugin} from "../plugins/softDelete.plugin.js";
 const deliveryNoteSchema = new mongoose.Schema({
   // ref: 'User' — usuario que crea
   user: {
@@ -46,11 +46,9 @@ const deliveryNoteSchema = new mongoose.Schema({
   signedAt: Date,
   signatureUrl: String, // URL de la imagen de firma (Cloudinary/R2)
   pdfUrl: String, // URL del PDF firmado en la nube
-  deleted: Boolean, // Soft delete
-  createdAt: Date,
-  updatedAt: Date,
-});
+}, { timestamps: true});
 
+deliveryNoteSchema.plugin(softDeletePlugin);
 
 const DeliveryNote = mongoose.model('DeliveryNote', deliveryNoteSchema);
 
