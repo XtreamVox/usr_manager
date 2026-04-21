@@ -19,6 +19,8 @@ export default function createProject(req, res, next) {
       name: name,
       client: client,
     });
+
+    res.status(201).json(project)
   } catch (error) {
     next(error);
   }
@@ -49,7 +51,7 @@ export async function getAllProjects(req, res, next) {
       .limit(limit)
       .sort({ createdAt: -1 });
 
-    const total = Project.countDocuments();
+    const total = await Project.countDocuments();
     res.json({
       data: projects,
       pagination: {

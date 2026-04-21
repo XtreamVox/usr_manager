@@ -53,7 +53,7 @@ export async function getAllClients(req, res, next) {
       .limit(limit)
       .sort({ createdAt: -1 });
 
-    const total = Client.countDocuments();
+    const total = await Client.countDocuments();
     res.json({
       data: clients,
       pagination: {
