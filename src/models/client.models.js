@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { softDeletePlugin } from '../plugins/softDelete.plugin.js';
 
+// TODO Optimizar esquema
 const clientSchema = new mongoose.Schema({
   // ref: 'User' — usuario que lo creó
   user: {

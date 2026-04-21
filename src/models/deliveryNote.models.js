@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 import { softDeletePlugin} from "../plugins/softDelete.plugin.js";
+
+// TODO Optimizar esquema
 const deliveryNoteSchema = new mongoose.Schema({
   // ref: 'User' — usuario que crea
   user: {
