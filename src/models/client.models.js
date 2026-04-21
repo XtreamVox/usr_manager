@@ -1,11 +1,12 @@
 import mongoose from 'mongoose';
+import { softDeletePlugin } from '../plugins/softDelete.plugin.js';
 
 const clientSchema = new mongoose.Schema({
   // ref: 'User' — usuario que lo creó
-    user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+  user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
   },       
   // ref: 'Company' — compañía a la que pertenece   
   company: {
@@ -24,10 +25,10 @@ const clientSchema = new mongoose.Schema({
     city: String,
     province: String
   },
-  deleted: Boolean,        // Soft delete
-  createdAt: Date,
-  updatedAt: Date
-});
+}, { timestamps: true});
+
+clientSchema.plugin(softDeletePlugin);
+
 
 const Client = mongoose.model('Client', clientSchema);
 export default Client;
