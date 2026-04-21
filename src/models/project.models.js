@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { required } from "zod/mini";
+import { softDeletePlugin } from "../plugins/softDelete.plugin.js";
 
 const projectSchema = new mongoose.Schema({
   // ref: 'User' — usuario que lo creó
@@ -32,10 +32,8 @@ const projectSchema = new mongoose.Schema({
   email: String, // Email de contacto del proyecto
   notes: String, // Notas adicionales
   active: Boolean,
-  deleted: Boolean, // Soft delete
-  createdAt: Date,
-  updatedAt: Date,
 });
 
+projectSchema.plugin(softDeletePlugin);
 const Project = mongoose.model("Project", projectSchema);
 export default Project;
