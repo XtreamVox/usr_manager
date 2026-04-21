@@ -5,12 +5,12 @@ const envSchema = z.object({
     PORT: z.string().regex(/^\d+$/).transform(Number).default('3000'),
     DB_URI: z.string(),
     JWT_SECRET: z.string().min(10, 'JWT_SECRET debe tener al menos 32 caracteres'),
-    SLACK_WEBHOOK= z.string().url(),
+    /*SLACK_WEBHOOK= z.string(),
     CLOUDINARY_CLOUD_NAME= z.string(),
     CLOUDINARY_API_KEY= z.string(),
     CLOUDINARY_API_SECRET= z.string(),
-    EMAIL_USER: z.string().email(),
-    EMAIL_PASS: z.string().min(8, 'EMAIL_PASS debe tener al menos 8 caracteres')
+    EMAIL_USER: z.email(),
+    EMAIL_PASS: z.string().min(8, 'EMAIL_PASS debe tener al menos 8 caracteres')*/
 });
 
 const parsed = envSchema.safeParse(process.env);
