@@ -57,7 +57,7 @@ export async function registerUser(req, res, next) {
     // TODO gestionar el error de envío del email
     // TODO añadir tiempo de expiración al código de verificación
     // TODO método para generar un nuevo randomCode para el usuario 
-    await sendVerificationEmail(user.email, randomCode, user.name);
+    //await sendVerificationEmail(user.email, randomCode, user.name);
 
     eventEmitter.emit(EVENTS.USER_REGISTERED, {
       email: user.email,
