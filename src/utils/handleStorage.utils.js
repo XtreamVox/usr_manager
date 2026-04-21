@@ -45,6 +45,25 @@ const uploadMiddleware = multer({
     fileSize: 5 * 1024 * 1024,  // 5MB
     files: 5                      // Máximo 5 archivos
   }
+}); 
+
+// Almacenamiento en disco
+const diskStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    // Generar nombre único
+    const uniqueSuffix = crypto.randomBytes(16).toString('hex');
+    const ext = path.extname(file.originalname);
+    cb(null, `${uniqueSuffix}${ext}`);
+  }
 });
 
+// Almacenamiento en memoria (para subir a cloud)
+const memoryStorage = multer.memoryStorage();
+
+export const uploadDisk = multer({ storage: diskStorage });
+export const uploadMemory = multer({ storage: memoryStorage });
 export default uploadMiddleware;
+

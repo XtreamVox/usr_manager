@@ -12,6 +12,8 @@ import eventEmitter, { EVENTS } from "../services/event.service.js";
 import RefreshToken from "../models/refreshToken.models.js";
 import { randomBytes } from "node:crypto";
 import { sendSlackNotification } from "../utils/handleLogger.js";
+import { uploadAvatar } from "./cloudinary.controller.js";
+import { sendVerificationEmail } from "../utils/sendEmails.js";
 
 const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:3000";
 
@@ -50,6 +52,9 @@ export async function registerUser(req, res, next) {
     user.status = "pending";
 
     await user.save();
+
+    // TODO configurar el email sender y comprobar que se envían los emails correctamente.
+    await sendVerificationEmail(user.email, randomCode, user.name);
 
     eventEmitter.emit(EVENTS.USER_REGISTERED, {
       email: user.email,
