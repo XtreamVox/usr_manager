@@ -1,16 +1,5 @@
 import { z } from "zod";
-
-const emailSchema = z.email("Email no válido").toLowerCase().trim();
-
-// Password seguro
-const passwordSchema = z
-  .string()
-  .min(8, "Mínimo 8 caracteres")
-  .regex(/[A-Z]/, "Debe contener mayúscula")
-  .regex(/[a-z]/, "Debe contener minúscula")
-  .regex(/[0-9]/, "Debe contener número");
-
-export const namesSchema = z.string().min(2).max(100).trim();
+import { namesSchema, nifSchema, passwordSchema, emailSchema  } from "./generalUse.squemes";
 
 export const registerUserSchema = z.object({
   email: emailSchema,
@@ -31,14 +20,7 @@ export const loginUserSchema = z.object({
 export const updateUserDataSchema = z.object({
   name: namesSchema,
   lastName: namesSchema,
-  nif: z
-    .string()
-    .length(9, "El NIF debe tener 9 caracteres")
-    .regex(
-      /^[0-9]{8}[A-Za-z]$/,
-      "El NIF debe tener 8 números seguidos de una letra",
-    )
-    .transform((val) => val.toUpperCase()),
+  nif: nifSchema,
 });
 
 export const changeUserPasswordSchema = z
