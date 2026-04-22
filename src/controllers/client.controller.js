@@ -45,10 +45,9 @@ export async function getAllClients(req, res, next) {
   try {
     // TODO gestionar querys y establecer defaults con zod
     const { limit, sort, page, filter } = req.query;
-    // TODO hacer esto en zod: limit ? minimum(limit, 100) : 1;
     const skip = (page - 1) * limit;
     const clients = await Client.find(filter)
-      .populate("Company", "User")
+      .populate(["Company", "User"])
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });

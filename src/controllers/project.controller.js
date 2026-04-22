@@ -46,7 +46,7 @@ export async function getAllProjects(req, res, next) {
     // TODO hacer esto en zod: limit ? minimum(limit, 100) : 1;
     const skip = (page - 1) * limit;
     const projects = await Project.find(filter)
-      .populate("Company", "User", "Client")
+      .populate(["Company", "User", "Client"])
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });
