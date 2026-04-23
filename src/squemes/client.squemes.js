@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   namesSchema,
+  sortOptionSquema,
   validateMongoId,
   cifSchema,
   emailSchema,
@@ -18,8 +19,6 @@ const clientIdSchema = validateMongoId("ID de cliente no válido");
 const companyIdSchema = validateMongoId("ID de empresa no válido");
 
 export const createClientScheme = z.object({
-  user: clientIdSchema,
-  company: companyIdSchema,
   name: namesSchema,
   cif: cifSchema,
   email: emailSchema,
@@ -31,9 +30,10 @@ export const ClientPaginationAndFilterScheme = buildPaginationAndFilterScheme(
   getSchemaMap("client"),
 );
 
+
 export const getClientScheme = validateMongoId("ID del cliente no válido");
 
-export const deleteClientScheme = sortOptionSquema;
+export const sortDeleteClientScheme = sortOptionSquema;
 export const validateDeleteIdScheme = validateMongoId(
   "ID de cliente no válido",
 );
@@ -41,3 +41,14 @@ export const validateDeleteIdScheme = validateMongoId(
 export const restoreArchivedProjectScheme = validateMongoId(
   "ID de cliente no válido",
 );
+
+export const validateClientIdScheme = validateMongoId("ID de cliente no válido");
+
+export const updateClientDataScheme = z.object({
+  name: namesSchema,
+  cif: cifSchema,
+  emial: emailSchema,
+  phone: phoneSchema,
+  address: addressSchema
+});
+ 
