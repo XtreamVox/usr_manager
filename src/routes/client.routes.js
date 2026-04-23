@@ -30,11 +30,11 @@ import { check } from "zod";
 const router = Router()
 
 router.post("/", authMiddleware, validate({body : createClientScheme }), checkForCompany, createClient);
-router.put("/", authMiddleware, validate({body : updateClientDataScheme}), validate({params: validateClientIdScheme}), checkForCompany, checkUserAndClientInCompany, updateClient);
+router.put("/:id", authMiddleware, validate({body : updateClientDataScheme}), validate({params: validateClientIdScheme}), checkForCompany, checkUserAndClientInCompany, updateClient);
 router.get("/", authMiddleware, validate({query: ClientPaginationAndFilterScheme}), checkForCompany, getAllClients)
-router.get("/", authMiddleware, validate({params: validateClientIdScheme}), checkForCompany, checkUserAndClientInCompany ,getClient);
-router.delete("/", authMiddleware, validate({params: validateDeleteIdScheme}), validate({query: sortDeleteClientScheme}), checkForCompany, checkUserAndClientInCompany, deleteClient)
+router.get("/:id", authMiddleware, validate({params: validateClientIdScheme}), checkForCompany, checkUserAndClientInCompany ,getClient);
+router.delete("/:id", authMiddleware, validate({params: validateDeleteIdScheme}), validate({query: sortDeleteClientScheme}), checkForCompany, checkUserAndClientInCompany, deleteClient)
 router.get("/archived", authMiddleware, checkRol("admin"), checkForCompany, listArchivedClients)
-router.patch("/restore", authMiddleware, checkRol("admin"), validate({params: validateClientIdScheme}), checkForCompany, checkUserAndClientInCompany, restoreArchivedClientById)
+router.patch("/:id/restore", authMiddleware, checkRol("admin"), validate({params: validateClientIdScheme}), checkForCompany, checkUserAndClientInCompany, restoreArchivedClientById)
 
 export default router;
