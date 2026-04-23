@@ -1,14 +1,17 @@
 import Client from "../models/client.models.js";
 import { AppError } from "../utils/AppError.js";
 import User from "../models/user.models.js";
+import Company from "../models/company.models.js";
 
 export async function createClient(req, res, next) {
   try {
     const { name, cif, email, phone, address } = req.body;
 
     const repe = await Client.find({ company: req.user.company, cif: cif });
+
     if (repe)
       throw AppError.conflict("Ya existe el cliente asociado a esta company");
+
 
     const client = await Client.create({
       user: req.user._id,
@@ -46,7 +49,7 @@ export async function getAllClients(req, res, next) {
     // TODO gestionar querys y establecer defaults con zod
     const { limit, sort, page, filter } = req.query;
     const skip = (page - 1) * limit;
-    const clients = await Client.find(filter)
+    const clients = await Client.find({...filter, company: req.user.company})
       .populate(["Company", "User"])
       .skip(skip)
       .limit(limit)
@@ -86,7 +89,8 @@ export async function deleteClient(req, res, next) {
     // TODO hacer que llegue como bool en zod
     const { soft } = req.query;
     const { id } = req.params;
-
+    
+    
     const client = Client.findById(id);
 
     if (soft) {
@@ -103,7 +107,7 @@ export async function deleteClient(req, res, next) {
 
 export async function listArchivedClients(req, res, next) {
   try {
-    const clients = Client.findDeleted();
+    const clients = Client.findDeleted({company: req.user.company});
     res.status(200).json(clients);
   } catch (error) {
     next(error);
@@ -114,8 +118,11 @@ export async function restoreArchivedClientById(req, res, next) {
   try {
     const { id } = req.params;
 
-    // ASK gestionar distintos errores de existencia ??
-    const clients = Client.restoreById();
+    const isDeleted = await Client.findDeleted({_id: id})
+    if(!isDeleted)
+      throw AppError.notFound("No hay cliente archivado")
+
+    const client = Client.restoreById(id);
     res.status(200).json(clients);
   } catch (error){
     next(error);
