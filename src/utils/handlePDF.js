@@ -26,34 +26,48 @@ export async function returnPdf(req, res,next) {
     }
 }
 
-export async function signPdf(req,res,next) {
+export const generatePdfBuffer = async (deliveryNote) => {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument();
+    const buffers = [];
 
-    try {
+    // Callbacks
+    doc.on('data', (chunk) => buffers.push(chunk));
 
-        if (!req.file) {
-            return AppError.badRequest("No se subio firma")
-        }
+    doc.on("end", () => {
+        // pasar el array a binario
+      const pdfData = Buffer.concat(buffers);
+      resolve(pdfData);
+    });
 
-        var doc = new PDFDocument()
-        doc.text('Aprendiendo a usar pdfkit u cloudinary',100,450)
+    doc.on("error", reject);
 
-        const pdfPromise = buffer(doc)
-        
-        doc.image(req.file.buffer, 300, 300, 50, 50)
-        doc.end()
+    // Contenido del PDF
+    doc.fontSize(20).text("Albarán", { align: "center" });
 
-        const pdfBuffer = await pdfPromise;
+    doc.moveDown();
+    doc.fontSize(12).text(`Cliente: ${deliveryNote.client.name}`);
+    doc.text(`Proyecto: ${deliveryNote.project.name}`);
+    doc.text(`Descripción: ${deliveryNote.description}`);
+    doc.text(`Horas: ${deliveryNote.hours}`);
 
-        const pdfResult = cloudinaryService.uploadBuffer(pdfBuffer, {
-            folder: 'pdfs', resource_type: 'raw', format: 'pdf', access_mode: 'public'
-        })
-        
-        const signatureResult = cloudinaryService.uploadImage(req.file.buffer, {
-            folder: 'signatures'
-        })   
+    if (deliveryNote.format === "hours") {
+        deliveryNote.workers?.data?.forEach((w) => {
+            doc.text(`Nombre: ${w.name} | Horas: ${w.hours}`);
+        });
+    };
 
-    } catch (error) {
-        next(error)
+    if (deliveryNote.format === "material") {
+      deliveryNote.material?.data?.forEach((m) => {
+        doc.text(`Nombre: ${m.name} | Cantidad: ${m.quantity}`);
+      });
+
+    if(deliveryNote.signed){
+        // recoger imagen firma cloudinary
+        doc.image(deliveryNote.signatureUrl);
     }
-
 }
+
+    doc.end();
+  });
+};

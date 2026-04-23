@@ -59,11 +59,14 @@ const deliveryNoteSchema = new mongoose.Schema(
         },
       ],
       required: function () {
-        return this.format === "material";
+        return this.format === "hours";
       },
     },
     // Firma
-    signed: Boolean,
+    signed: {
+      type: Boolean,
+      default: false,
+    },
     signedAt: Date,
     signatureUrl: String, // URL de la imagen de firma (Cloudinary/R2)
     pdfUrl: String, // URL del PDF firmado en la nube
