@@ -24,12 +24,6 @@ export const addressSchema = z.object({
   province: z.string().min(1, "La provincia es requerida"),
 });
 
-// ASK preguntar cual es el comportamiento default si no se utiliza la query
-// Gestionar paginación al listar clientes
-export const listPaginationScheme = z.object({
-  limit: z.coerce.number().min(1).max(100).default(10),
-  page: z.coerce.number().min(1).default(1),
-});
 
 export const nifSchema =  z
     .string()
@@ -56,3 +50,10 @@ export const passwordSchema = z
   .regex(/[a-z]/, "Debe contener minúscula")
   .regex(/[0-9]/, "Debe contener número");
 
+
+export const sortOptionSquema = z.object({
+  soft: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((val) => val === "true"),
+});

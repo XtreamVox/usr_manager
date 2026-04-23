@@ -4,7 +4,11 @@ import User from "../models/user.models.js";
 import Company from "../models/company.models.js";
 import Project from "../models/project.models.js";
 
-
+// Gestionar paginación al listar clientes
+const listPaginationScheme = z.object({
+  limit: z.coerce.number().min(1).max(100).default(10),
+  page: z.coerce.number().min(1).default(1),
+});
 // TODO sustituir los switch por un comportamiento dinámico
 const clientTypeToZod = (instance, path) => {
   switch (instance) {
@@ -66,3 +70,95 @@ export const getSchemaMap = (model) => {
       throw new Error("Modelo no soportado");
   }
 };
+
+const schemaPaths = Object.keys(Client.schema.paths);
+
+const validSortKeys = schemaPaths.filter(
+  k => !k.startsWith("_") && k !== "__v"
+);
+
+const sortSchema = z
+  .string()
+  .refine((val) => {
+    const key = val.startsWith("-") ? val.slice(1) : val;
+    return validSortKeys.includes(key);
+  }, "Invalid sort field")
+  .transform((val) => {
+    if (val.startsWith("-")) {
+      return { [val.slice(1)]: -1 };
+    }
+    return { [val]: 1 };
+  });
+
+export const buildPaginationAndFilterScheme = (schemaMap) =>
+  z
+    .object({})
+    .catchall(z.string())
+    .transform((data, ctx) => {
+      const parsed = {
+        limit: 10,
+        page: 1,
+        sort: { createdAt: -1 },
+        filters: {},
+      };
+
+      for (const [key, value] of Object.entries(data)) {
+        // limit y page
+        if (key === "limit" || key === "page") {
+          const result = listPaginationScheme.shape[key].safeParse(value);
+
+          if (!result.success) {
+            result.error.issues.forEach(issue => ctx.addIssue(issue));
+            continue;
+          }
+
+          parsed[key] = result.data;
+          continue;
+        }
+
+        // sort
+        if (key === "sort") {
+          const sortKey = value.startsWith("-") ? value.slice(1) : value;
+
+          if (!(sortKey in schemaMap)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Sort inválido: ${value}`,
+              path: ["sort"],
+            });
+            continue;
+          }
+
+          parsed.sort = {
+            [sortKey]: value.startsWith("-") ? -1 : 1,
+          };
+          continue;
+        }
+
+        // filtros
+        if (!(key in schemaMap)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Filtro inválido: ${key}`,
+            path: [key],
+          });
+          continue;
+        }
+
+        const result = schemaMap[key].safeParse(value);
+
+        if (!result.success) {
+          result.error.issues.forEach(issue =>
+            ctx.addIssue({
+              ...issue,
+              path: [key],
+            })
+          );
+          continue;
+        }
+
+        parsed.filters[key] = result.data;
+      }
+
+      return parsed;
+    });

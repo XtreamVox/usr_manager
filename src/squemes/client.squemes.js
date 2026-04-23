@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { namesSchema, validateMongoId, cifSchema, emailSchema, phoneSchema, addressSchema, listPaginationScheme } from './generalUse.squemes.js';
-import { getSchemaMap } from './mongoToZod.squemes.js';
+import { buildPaginationAndFilterScheme } from './mongoToZod.squemes.js';
 
 const clientIdSchema = validateMongoId("ID de cliente no válido");
 
@@ -17,4 +17,11 @@ export const createClientScheme = z.object({
     address: addressSchema.optional()
 })
 
-export const paginationAndFilterScheme = z.union([listPaginationScheme, getSchemaMap("client")]);
+export const ClientPaginationAndFilterScheme = buildPaginationAndFilterScheme(getSchemaMap("client"));
+
+export const getClientScheme = validateMongoId("ID del cliente no válido");
+
+export const deleteClientScheme = sortOptionSquema;
+export const validateDeleteIdScheme = validateMongoId("ID de cliente no válido")
+
+export const restoreArchivedProjectScheme = validateMongoId("ID de cliente no válido");

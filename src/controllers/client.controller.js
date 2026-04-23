@@ -13,7 +13,7 @@ export async function createClient(req, res, next) {
     const client = await Client.create({
       user: req.user._id,
       company: req.user.company,
-      name: name,
+      name: name, 
       cif: cif,
       email: email,
       phone: phone,
