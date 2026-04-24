@@ -43,10 +43,9 @@ export async function updateClient(req, res, next) {
   }
 }
 
-// ASK listar con populate?
+//TODO los populate solo deben mostrar cierta información
 export async function getAllClients(req, res, next) {
   try {
-    // TODO gestionar querys y establecer defaults con zod
     const { limit, sort, page, filter } = req.query;
     const skip = (page - 1) * limit;
     const clients = await Client.find({...filter, company: req.user.company})
@@ -86,7 +85,6 @@ export async function getClient(req, res, next) {
 
 export async function deleteClient(req, res, next) {
   try {
-    // TODO hacer que llegue como bool en zod
     const { soft } = req.query;
     const { id } = req.params;
     
@@ -118,7 +116,7 @@ export async function restoreArchivedClientById(req, res, next) {
   try {
     const { id } = req.params;
 
-    const isDeleted = await Client.findDeleted({_id: id})
+    const isDeleted = await Client.restoreById({_id: id, company: req.user.company})
     if(!isDeleted)
       throw AppError.notFound("No hay cliente archivado")
 
