@@ -23,7 +23,6 @@ export async function createDeliveryNote(req, res, next) {
 
 export async function getAllDeliveryNotes(req, res, next) {
   try {
-    // TODO gestionar querys y establecer defaults con zod
     const { limit, sort, page, filter, from, to } = req.query;
     const skip = (page - 1) * limit;
     const deliveryNotes = await DeliveryNote.find({
@@ -66,7 +65,6 @@ export async function getDeliveryNote(req, res, next) {
 
 export async function deleteDeliveryNote(req, res, next) {
   try {
-    // TODO hacer que llegue como bool en zod
     const { soft } = req.query;
     const { id } = req.params;
 

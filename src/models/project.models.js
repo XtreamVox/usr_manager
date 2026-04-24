@@ -25,6 +25,7 @@ const projectSchema = new mongoose.Schema({
     type: String,
     required: true,
   }, // Nombre del proyecto
+  // TODO esto se debería gestionar automaticamente mediante un virtual al crear el objeto
   projectCode:{
     type: String,
     unique: true,
@@ -38,7 +39,9 @@ const projectSchema = new mongoose.Schema({
     province: String,
   },
   email: String, // Email de contacto del proyecto
+  // ASK necesito más info para saber cómo tratarlo
   notes: String, // Notas adicionales
+  // ASK para que sirve esto?
   active: Boolean,
 });
 
