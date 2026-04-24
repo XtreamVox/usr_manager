@@ -15,15 +15,28 @@ import {
 } from "./mongoToZod.squemes.js";
 
 export const postProjectScheme = z.object({
-  user: validateMongoId("ID de usuario no válido"),
-  company: validateMongoId("ID de empresa no válido"),
   client: validateMongoId("ID de cliente no válido"),
   name: namesSchema,
+  email: emailSchema.optional(),
+  address: addressSchema.optional(),
+  notes: z.string().optional(),
+  active: z.boolean().optional()
 });
 
-export const updateProjectScheme = z.object({
+export const updateProjectIdScheme = z.object({
   id: validateMongoId("ID de proyecto no válido"),
 });
+
+// reasignar el project a un nuevo usuario si lo hace el admin
+export const updateProjectBodyScheme = z.object({
+  user: validateDeleteIdScheme("ID de usuario no válido").optional(),
+  client: validateMongoId("ID de cliente no válido").optional(),
+  name: namesSchema.optional(),
+  email: emailSchema.optional(),
+  address: addressSchema.optional(),
+  notes: z.string().optional(),
+  active: z.boolean().optional()
+})
 
 export const ProjectPaginationAndFilterScheme = buildPaginationAndFilterScheme(
   getSchemaMap("project"),
