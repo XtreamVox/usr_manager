@@ -3,49 +3,55 @@ import Project from "../models/project.models.js";
 import User from "../models/user.models.js";
 import { AppError } from "../utils/AppError.js";
 
-export default function createProject(req, res, next) {
+export function createProject(req, res, next) {
   try {
     // recibe ObjectIds
-    const { user, company, name, client } = req.body;
+    const { name, client } = req.body;
 
-    const userDoc = User.findById(user);
+    const userDoc = req.user;
     const clientDoc = Client.findById(client);
-    if (userDoc.company != company) throw AppError.badRequest("El usuario debe pertenecer a la company");
-    if (clientDoc.company != company) throw AppError.badRequest("El cliente debe pertenecer a la company");
+    if (clientDoc.company != userDoc.company)
+      throw AppError.badRequest("El cliente debe pertenecer a la company");
 
     const project = Project.create({
-      user: user,
-      company: company,
+      user: req.user,
+      company: req.user.company,
       name: name,
       client: client,
     });
 
-    res.status(201).json(project)
+    res.status(201).json(project);
   } catch (error) {
     next(error);
   }
 }
-// ASK hasta que punto se puede modificar
-export default function updateProject(req, res, next) {
-    try {
-        const { id } = req.params;
-        const project = Project.findByIdAndUpdate(id, req.body);
 
-        
-        res.status(200).json(project)
-    } catch (error) {
-        next(error)
+// TODO revisar
+export function updateProject(req, res, next) {
+  try {
+    const { id } = req.params;
+    let project = Project.findById(id)
+    if(req.user.company != project.company)  throw AppError.forbidden("Solo puede modificar proyectos de su company")
+
+    if (req.user.role == "admin") {
+      const userToReasign = User.findById(req.body.user);
+      if (userToReasign.company != project.company) throw AppError.forbidden("El nuevo usuario debe pertenecer a la company")
+      project.updateOne(req.body, {new : true});
+    } else {
+      if (req.body.user != null) throw AppError.forbidden("Un guest no puede reasignar un proyecto");
+      project.updateOne(req.body, {new : true});
     }
+    res.status(200).json(project);
+  } catch (error) {
+    next(error);
+  }
 }
-
 
 export async function getAllProjects(req, res, next) {
   try {
-    // TODO gestionar querys y establecer defaults con zod
     const { limit, sort, page, filter } = req.query;
-    // TODO hacer esto en zod: limit ? minimum(limit, 100) : 1;
     const skip = (page - 1) * limit;
-    const projects = await Project.find(filter)
+    const projects = await Project.find({filter, company: req.user.company})
       .populate(["Company", "User", "Client"])
       .skip(skip)
       .limit(limit)
@@ -74,6 +80,8 @@ export async function getProject(req, res, next) {
 
     const project = await Project.findById(id);
 
+    if(req.user.company != project.company) throw AppError.forbidden("Solo puede acceder a los proyectos de su company");
+
     res.status(200).json(project);
   } catch (error) {
     next(error);
@@ -82,11 +90,11 @@ export async function getProject(req, res, next) {
 
 export async function deleteProject(req, res, next) {
   try {
-    // TODO hacer que llegue como bool en zod
     const { soft } = req.query;
     const { id } = req.params;
 
     const project = Project.findById(id);
+    if(req.user.company != project.company) throw AppError.forbidden("Solo puede eliminar los proyectos de su company");
 
     if (soft) {
       await Project.softDeleteById(id);
@@ -102,23 +110,20 @@ export async function deleteProject(req, res, next) {
 
 export async function listArchivedProjects(req, res, next) {
   try {
-    const projects = Project.findDeleted();
+    const projects = Project.findDeleted({company : req.user.company});
     res.status(200).json(projects);
   } catch (error) {
     next(error);
   }
 }
 
-
 export async function restoreArchivedProjectById(req, res, next) {
   try {
     const { id } = req.params;
 
-    // ASK gestionar distintos errores de existencia ??
-    const projects = Project.restoreById();
+    const projects = Project.restoreById({_id : id, compnay : req.user.company});
     res.status(200).json(projects);
-  } catch (error){
+  } catch (error) {
     next(error);
   }
 }
-
