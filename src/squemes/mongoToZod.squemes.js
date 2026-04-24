@@ -48,7 +48,7 @@ const projectTypeToZod = (instance, path) =>{
 const buildSchemaMap = (schemaPaths, mapper) =>
   Object.fromEntries(
     Object.entries(schemaPaths)
-      .filter(([key]) => !key.startsWith("_") && key !== "__v")
+      .filter(([key]) => !key.startsWith("_") && key !== "__v" && key !== "company")
       .map(([key, path]) => [key, mapper(path.instance, path)]),
   );
 
