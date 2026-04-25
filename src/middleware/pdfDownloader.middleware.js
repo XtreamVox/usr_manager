@@ -1,6 +1,8 @@
 import { application } from "express";
 import { AppError } from "../utils/AppError";
 
+//TODO se ejecuta de forma puntual, no es un middleware
+
 const https = require("https");
 
 const downloadPdf = (url) => (req, res, next) => {
