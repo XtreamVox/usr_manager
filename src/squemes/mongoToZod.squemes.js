@@ -10,7 +10,7 @@ const listPaginationScheme = z.object({
   page: z.coerce.number().min(1).default(1),
 });
 // TODO sustituir los switch por un comportamiento dinámico
-const clientTypeToZod = (instance, path) => {
+const modelTypeToZod = (instance, path) => {
   switch (instance) {
     case "String":
       return path.enumValues?.length ? z.enum(path.enumValues) : z.string();
@@ -29,22 +29,6 @@ const clientTypeToZod = (instance, path) => {
   }
 };
 
-const userTypeToZod = (instance, path) =>{
-    switch (instance) {
-    }
-}
-
-
-const companyTypeToZod = (instance, path) =>{
-    switch (instance) {
-    }
-}
-
-const projectTypeToZod = (instance, path) =>{
-    switch (instance) {
-    }
-}
-
 const buildSchemaMap = (schemaPaths, mapper) =>
   Object.fromEntries(
     Object.entries(schemaPaths)
@@ -55,16 +39,16 @@ const buildSchemaMap = (schemaPaths, mapper) =>
 export const getSchemaMap = (model) => {
   switch (model) {
     case "client":
-      return buildSchemaMap(Client.schema.paths, clientTypeToZod);
+      return buildSchemaMap(Client.schema.paths, modelTypeToZod);
 
     case "user":
-      return buildSchemaMap(User.schema.paths, userTypeToZod);
+      return buildSchemaMap(User.schema.paths, modelTypeToZod);
 
     case "company":
-      return buildSchemaMap(Company.schema.paths, companyTypeToZod);
+      return buildSchemaMap(Company.schema.paths, modelTypeToZod);
     
       case "project":
-      return buildSchemaMap(Project.schema.paths, projectTypeToZod);
+      return buildSchemaMap(Project.schema.paths, modelTypeToZod);
 
     default:
       throw new Error("Modelo no soportado");
