@@ -55,11 +55,8 @@ export async function getDeliveryNote(req, res, next) {
   try {
     const { id } = req.params;
 
-    const deliveryNote = await DeliveryNote.findById(id);
-    if (req.user.company != deliveryNote.company)
-      throw AppError.forbidden(
-        "Solo puede acceder a la información de su company",
-      );
+    const deliveryNote = await DeliveryNote.findOne({_id : id, company : req.user.company});
+    if (!deliveryNote) throw AppError.notFound("No se encontró el albaran");
 
     res.status(200).json(deliveryNote);
   } catch (error) {
@@ -72,9 +69,9 @@ export async function deleteDeliveryNote(req, res, next) {
     const { soft } = req.query;
     const { id } = req.params;
 
-    const deliveryNote = await DeliveryNote.findById(id);
-    if (deliveryNote.signed)
-      throw AppError.badRequest("No se puede eliminar un albaran firmado");
+    const deliveryNote = await DeliveryNote.findOne({_id : id, company = req.user.company});
+    if (!deliveryNote) throw AppError.notFound("No se encontró el albaran");
+    if (deliveryNote.signed) throw AppError.forbidden("No se puede eliminar un albaran firmado");
 
     if (soft) {
       await deliveryNote.softDeleteById(id);
@@ -91,25 +88,21 @@ export async function deleteDeliveryNote(req, res, next) {
 export async function getPdfFromDeliveryNote(req, res, next) {
   try {
     const { id } = req.params;
-    const nota = await DeliveryNote.findById(id);
+    const deliveryNote = await DeliveryNote.findOne({_id : id, company: req.user.company});
+    if (!deliveryNote) throw AppError.notFound("No se encontró el albaran");
+    
     let pdf;
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
       `Content-Disposition`,
-      `attachment; filename=${nota.name}.pdf`,
+      `attachment; filename=${deliveryNote.name}.pdf`,
     );
 
-    if (nota.company != req.user.company) {
-      throw AppError.forbidden(
-        "Solo puede acceder a la información de su company",
-      );
-    }
-
-    if (nota.signed) {
-      downloadPdf(nota.pdfUrl)
+    if (deliveryNote.signed) {
+      downloadPdf(deliveryNote.pdfUrl)
       pdf = req.pdf;
-    } else pdf = generatePdfBuffer(nota);
+    } else pdf = generatePdfBuffer(deliveryNote);
 
     res.send(pdf);
   } catch (error) {
@@ -120,22 +113,23 @@ export async function getPdfFromDeliveryNote(req, res, next) {
 export async function signPdf(req, res, next) {
   try {
     const { id } = req.params;
-    const binarySignatura = req.file.buffer;
-    const nota = await DeliveryNote.findById(id);
+    const binarySignature = req.file.buffer;
+    const deliveryNote = await DeliveryNote.findOne({_id : id, company : req.user.company});
+    if (!deliveryNote) throw AppError.notFound("No se encontró el albaran");
 
-    const firmaUrl = await cloudinaryService.uploadImage(binarySignatura);
+    const firmaUrl = await cloudinaryService.uploadImage(binarySignature);
 
-    nota.signatureUrl = firmaUrl.secure_url;
-    nota.signed = true;
-    nota.signedAt = Date.now();
+    deliveryNote.signatureUrl = firmaUrl.secure_url;
+    deliveryNote.signed = true;
+    deliveryNote.signedAt = Date.now();
 
-    const pdf = generatePdfBuffer(nota);
+    const pdf = generatePdfBuffer(deliveryNote);
     const pdfUrl = await cloudinaryService.uploadPdf(pdf);
 
-    nota.pdfUrl = pdfUrl.secure_url;
-    await nota.save();
+    deliveryNote.pdfUrl = pdfUrl.secure_url;
+    await deliveryNote.save();
 
-    res.status(200).json(nota);
+    res.status(200).json(deliveryNote);
   } catch (error) {
     next(error);
   }

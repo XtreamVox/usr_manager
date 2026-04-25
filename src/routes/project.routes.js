@@ -2,7 +2,7 @@ import { Router } from "express";
 import authMiddleware from "../middleware/auth.midddleware.js";
 import checkRol from "../middleware/role.middleware.js";
 import { validate, validateFiles } from "../middleware/validate.middleware.js";
-import { checkForCompany, checkUserAndClientInCompany } from "../middleware/client_checks.middleware.js"
+import { checkForCompany } from "../middleware/client_checks.middleware.js"
 
 import {
   createProject,

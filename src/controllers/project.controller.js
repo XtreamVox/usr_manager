@@ -8,11 +8,6 @@ export function createProject(req, res, next) {
     // recibe ObjectIds
     const { name, client } = req.body;
 
-    const userDoc = req.user;
-    const clientDoc = Client.findById(client);
-    if (clientDoc.company != userDoc.company)
-      throw AppError.badRequest("El cliente debe pertenecer a la company");
-
     const project = Project.create({
       user: req.user,
       company: req.user.company,
@@ -26,20 +21,23 @@ export function createProject(req, res, next) {
   }
 }
 
-// TODO revisar
 export function updateProject(req, res, next) {
   try {
     const { id } = req.params;
-    let project = Project.findById(id)
-    if(req.user.company != project.company)  throw AppError.forbidden("Solo puede modificar proyectos de su company")
+    let project = Project.findOne({ _id: id, company: req.user.company });
+    if (!project) throw AppError.notFound("Pryecto no encontrado");
 
     if (req.user.role == "admin") {
-      const userToReasign = User.findById(req.body.user);
-      if (userToReasign.company != project.company) throw AppError.forbidden("El nuevo usuario debe pertenecer a la company")
-      project.updateOne(req.body, {new : true});
+      const userToReasign = User.findOne({
+        _id: req.body.user,
+        company: req.user.company,
+      });
+      if (!userToReasign) throw AppError.notFound("Usuario no encontrado");
+      project.updateOne(req.body, { new: true });
     } else {
-      if (req.body.user != null) throw AppError.forbidden("Un guest no puede reasignar un proyecto");
-      project.updateOne(req.body, {new : true});
+      if (req.body.user != null)
+        throw AppError.forbidden("Un guest no puede reasignar un proyecto");
+      project.updateOne(req.body, { new: true });
     }
     res.status(200).json(project);
   } catch (error) {
@@ -51,7 +49,7 @@ export async function getAllProjects(req, res, next) {
   try {
     const { limit, sort, page, filter } = req.query;
     const skip = (page - 1) * limit;
-    const projects = await Project.find({filter, company: req.user.company})
+    const projects = await Project.find({ filter, company: req.user.company })
       .populate(["Company", "User", "Client"])
       .skip(skip)
       .limit(limit)
@@ -78,9 +76,12 @@ export async function getProject(req, res, next) {
   try {
     const { id } = req.params;
 
-    const project = await Project.findById(id);
+    const project = await Project.findOne({
+      _id: id,
+      company: req.user.company,
+    });
 
-    if(req.user.company != project.company) throw AppError.forbidden("Solo puede acceder a los proyectos de su company");
+    if (!project) throw AppError.notFound("Projecto no encontrado");
 
     res.status(200).json(project);
   } catch (error) {
@@ -93,8 +94,8 @@ export async function deleteProject(req, res, next) {
     const { soft } = req.query;
     const { id } = req.params;
 
-    const project = Project.findById(id);
-    if(req.user.company != project.company) throw AppError.forbidden("Solo puede eliminar los proyectos de su company");
+    const project = Project.findOne({ _id: id, company: req.user.company });
+    if (!project) throw AppError.notFound("Projecto no encontrado");
 
     if (soft) {
       await Project.softDeleteById(id);
@@ -110,7 +111,7 @@ export async function deleteProject(req, res, next) {
 
 export async function listArchivedProjects(req, res, next) {
   try {
-    const projects = Project.findDeleted({company : req.user.company});
+    const projects = Project.findDeleted({ company: req.user.company });
     res.status(200).json(projects);
   } catch (error) {
     next(error);
@@ -121,7 +122,13 @@ export async function restoreArchivedProjectById(req, res, next) {
   try {
     const { id } = req.params;
 
-    const projects = Project.restoreById({_id : id, compnay : req.user.company});
+    const isDeleted = await Project.findDeleted({
+      _id: id,
+      company: req.user.company,
+    });
+    if (!isDeleted) throw AppError.notFound("No hay cliente archivado");
+
+    const projects = Project.restoreById(id);
     res.status(200).json(projects);
   } catch (error) {
     next(error);

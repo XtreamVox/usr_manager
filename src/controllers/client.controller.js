@@ -7,7 +7,7 @@ export async function createClient(req, res, next) {
   try {
     const { name, cif, email, phone, address } = req.body;
 
-    const repe = await Client.find({ company: req.user.company, cif: cif });
+    const repe = await Client.findOne({ company: req.user.company, cif: cif });
 
     if (repe)
       throw AppError.conflict("Ya existe el cliente asociado a esta company");
@@ -35,7 +35,8 @@ export async function updateClient(req, res, next) {
     const obj = req.body;
 
     // recuperar el client y actualizar
-    const client = await Client.findByIdAndUpdate(id, obj);
+    const client = await Client.findByIdAndUpdate(id, obj,{ new : true });
+    if(!client) throw AppError.notFound("Cliente no encontrado")
 
     res.status(200).json(obj);
   } catch (error) {
@@ -75,7 +76,8 @@ export async function getClient(req, res, next) {
   try {
     const { id } = req.params;
 
-    const client = await Client.findById(id);
+    const client = await Client.findOne({_id: id, company: req.user.company});
+    if(!client) throw AppError.notFound("Cliente no encontrado")
 
     res.status(200).json(client);
   } catch (error) {
@@ -89,7 +91,8 @@ export async function deleteClient(req, res, next) {
     const { id } = req.params;
     
     
-    const client = Client.findById(id);
+    const client = Client.findOne({_id: id, company: req.user.company});
+    if(!client) throw AppError.notFound("Cliente no encontrado")
 
     if (soft) {
       await Client.softDeleteById(id);
@@ -116,7 +119,7 @@ export async function restoreArchivedClientById(req, res, next) {
   try {
     const { id } = req.params;
 
-    const isDeleted = await Client.restoreById({_id: id, company: req.user.company})
+    const isDeleted = await Client.findDeleted({_id: id, company: req.user.company})
     if(!isDeleted)
       throw AppError.notFound("No hay cliente archivado")
 
