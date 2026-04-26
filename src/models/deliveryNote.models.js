@@ -37,27 +37,30 @@ const deliveryNoteSchema = new mongoose.Schema(
     workDate: Date, // Fecha del trabajo
     // Para format: 'material'
     material: {
-      unit: String,
-      data: [
-        {
-          name: String,
-          quantity: Number,
-        },
-      ],
+      type: {
+        unit: String,
+        data: [
+          {
+            name: String,
+            quantity: Number,
+          },
+        ],
+      },
       required: function () {
         return this.format === "material";
       },
     },
     // Para format: 'hours'
     workers: {
-      hours: Number,
-      data: [
-        {
-          // Múltiples trabajadores (opcional)
-          name: String,
-          hours: Number,
-        },
-      ],
+      type: {
+        hours: Number,
+        data: [
+          {
+            name: String,
+            hours: Number,
+          },
+        ],
+      },
       required: function () {
         return this.format === "hours";
       },
