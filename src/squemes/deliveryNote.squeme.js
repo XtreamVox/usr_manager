@@ -6,13 +6,14 @@ import {
   emailSchema,
   phoneSchema,
   addressSchema,
-  listPaginationScheme,
-  sortOptionSquema,
+  softOptionSchema,
+  mongoIDSchema,
 } from "./generalUse.squemes.js";
 import {
   buildPaginationAndFilterScheme,
   getSchemaMap,
 } from "./mongoToZod.squemes.js";
+import { date } from "zod/v3";
 
 const materialSchema = z
   .object({
@@ -23,8 +24,7 @@ const materialSchema = z
         quantity: z.number(),
       }),
     ),
-  })
-  .optional();
+  });
 
 const workersSchema = z.object({
   hours: z.number(),
@@ -34,26 +34,27 @@ const workersSchema = z.object({
       hours: z.number()
     })
   )
-}).optional();
+});
 
 const baseCreateSchema = z.object({
-  client: validateMongoId("ID de cliente no válido"),
-  project: validateMongoId("ID de project no válido"),
+  client: mongoIDSchema,
+  project: mongoIDSchema,
   description: z.string().optional(),
-  workDate: z.date().optional(),
-})
+  workDate: z.string().transform((val) => new Date(val)).optional()
+  }
+);
 
 export const createDeliveryNoteScheme =  z.discriminatedUnion("format", [
   z.object({
-    ...baseCreateSchema,
+    ...baseCreateSchema.shape,
     format: z.literal("material"),
     material: materialSchema,
-    workers: z.never()
+    workers: z.never().optional()
   }),
     z.object({
-    ...baseCreateSchema,
+    ...baseCreateSchema.shape,
     format: z.literal("hours"),
-    material: z.never(),
+    material: z.never().optional(),
     workers: workersSchema
   }),
 ]); 
@@ -61,12 +62,11 @@ export const createDeliveryNoteScheme =  z.discriminatedUnion("format", [
 export const DeliveryNotePaginationAndFilterScheme =
   buildPaginationAndFilterScheme(getSchemaMap("deliveryNote"));
 
-export const validateDeliveryNoteIdScheme = z.object({
-  id: validateMongoId("ID del albaran no válido")
-})
+export const validateDeliveryNoteIdScheme = validateMongoId("ID del albaran no válido");
 
 
-export const sortDeleteDeliveryNoteScheme = sortOptionSquema;
+
+export const softDeleteDeliveryNoteScheme = softOptionSchema;
 export const validateDeleteIdScheme = validateMongoId(
   "ID de cliente no válido",
 );

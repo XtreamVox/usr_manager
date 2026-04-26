@@ -1,13 +1,12 @@
 import { z } from "zod";
 import {
   namesSchema,
-  sortOptionSquema,
+  softOptionSchema,
   validateMongoId,
   cifSchema,
   emailSchema,
   phoneSchema,
   addressSchema,
-  listPaginationScheme,
 } from "./generalUse.squemes.js";
 import {
   buildPaginationAndFilterScheme,
@@ -33,7 +32,7 @@ export const ClientPaginationAndFilterScheme = buildPaginationAndFilterScheme(
 
 export const getClientScheme = validateMongoId("ID del cliente no válido");
 
-export const sortDeleteClientScheme = sortOptionSquema;
+export const softDeleteClientScheme = softOptionSchema;
 export const validateDeleteIdScheme = validateMongoId(
   "ID de cliente no válido",
 );
@@ -42,13 +41,13 @@ export const restoreArchivedProjectScheme = validateMongoId(
   "ID de cliente no válido",
 );
 
-export const validateClientIdScheme = validateMongoId("ID de cliente no válido");
+export const validateClientIdScheme = validateMongoId("ID de cliente no válido en clientScheme");
 
 export const updateClientDataScheme = z.object({
   name: namesSchema,
-  cif: cifSchema,
-  emial: emailSchema,
-  phone: phoneSchema,
-  address: addressSchema
+  cif: cifSchema.optional(),
+  email: emailSchema.optional(),
+  phone: phoneSchema.optional(),
+  address: addressSchema.optional()
 });
  

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { nameSchema, cifSchema, addressSchema } from "./generalUse.squemes.js";
+import { namesSchema, cifSchema, addressSchema } from "./generalUse.squemes.js";
 
 
 

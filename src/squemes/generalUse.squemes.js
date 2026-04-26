@@ -32,11 +32,15 @@ export const nifSchema =  z
       /^[0-9]{8}[A-Za-z]$/,
       "El NIF debe tener 8 números seguidos de una letra",
     )
-    .transform((val) => val.toUpperCase()),
+    .transform((val) => val.toUpperCase());
 
 export const validQueriesKeys = (mongoObject) => z.enum([...mongoObject.schema.obj.keys()]);
 
-export const validateMongoId = (mensaje) => z.string().regex(/^[0-9a-fA-F]{24}$/, mensaje);
+export const mongoIDSchema = z.string().regex(/^[0-9a-fA-F]{24}$/);
+
+export const validateMongoId = (mensaje) => z.object({
+  id: mongoIDSchema,
+});
 
 export const phoneSchema = z.string().min(7, "El número de teléfono debe tener al menos 7 dígitos").
 max(15, "El número de teléfono no puede tener más de 15 dígitos").
@@ -51,7 +55,7 @@ export const passwordSchema = z
   .regex(/[0-9]/, "Debe contener número");
 
 
-export const sortOptionSquema = z.object({
+export const softOptionSchema = z.object({
   soft: z
     .enum(["true", "false"])
     .optional()

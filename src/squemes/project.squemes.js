@@ -6,16 +6,16 @@ import {
   emailSchema,
   phoneSchema,
   addressSchema,
-  listPaginationScheme,
-  sortOptionSquema,
+  softOptionSchema,
+  mongoIDSchema,
 } from "./generalUse.squemes.js";
 import {
   buildPaginationAndFilterScheme,
   getSchemaMap,
 } from "./mongoToZod.squemes.js";
 
-export const postProjectScheme = z.object({
-  client: validateMongoId("ID de cliente no válido"),
+export const createProjectScheme = z.object({
+  client: mongoIDSchema,
   name: namesSchema,
   email: emailSchema.optional(),
   address: addressSchema.optional(),
@@ -23,14 +23,12 @@ export const postProjectScheme = z.object({
   active: z.boolean().optional()
 });
 
-export const updateProjectIdScheme = z.object({
-  id: validateMongoId("ID de proyecto no válido"),
-});
+export const updateProjectIdScheme = validateMongoId("ID de proyecto no válido");
 
 // reasignar el project a un nuevo usuario si lo hace el admin
 export const updateProjectBodyScheme = z.object({
-  user: validateDeleteIdScheme("ID de usuario no válido").optional(),
-  client: validateMongoId("ID de cliente no válido").optional(),
+  user: mongoIDSchema.optional(),
+  client: mongoIDSchema.optional(),
   name: namesSchema.optional(),
   email: emailSchema.optional(),
   address: addressSchema.optional(),
@@ -42,11 +40,9 @@ export const ProjectPaginationAndFilterScheme = buildPaginationAndFilterScheme(
   getSchemaMap("project"),
 );
 
-export const getProjectScheme = z.object({
-  id: validateMongoId("ID de proyecto no válido"),
-});
+export const getProjectScheme =  validateMongoId("ID de proyecto no válido");
 
-export const deleteProjectScheme = sortOptionSquema;
+export const softDeleteProjectScheme = softOptionSchema;
 export const validateDeleteIdScheme = validateMongoId(
   "ID de proyecto no válido",
 );
