@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { namesSchema, nifSchema, passwordSchema, emailSchema, sortOptionSquema } from "./generalUse.squemes";
+import { namesSchema, nifSchema, passwordSchema, emailSchema, softOptionSchema } from "./generalUse.squemes.js";
 
 export const registerUserSchema = z.object({
   email: emailSchema,
@@ -34,10 +34,10 @@ export const changeUserPasswordSchema = z
   });
 
 export const refreshUserSessionSchema = z.object({
-  refreshToken: z.string().regex(/^eyJ/, "Token inválido"),
+  refreshToken: z.string(),
 });
 
-export const deleteUserSchema = sortOptionSquema;
+export const deleteUserSchema = softOptionSchema;
 
 export const inviteUserSchema = z.object({
   email: emailSchema,
