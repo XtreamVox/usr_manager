@@ -3,6 +3,8 @@ import Client from "../models/client.models.js";
 import User from "../models/user.models.js";
 import Company from "../models/company.models.js";
 import Project from "../models/project.models.js";
+import { AppError } from "../utils/AppError.js";
+import DeliveryNote from "../models/deliveryNote.models.js";
 
 // Gestionar paginación al listar clientes
 const listPaginationScheme = z.object({
@@ -47,11 +49,14 @@ export const getSchemaMap = (model) => {
     case "company":
       return buildSchemaMap(Company.schema.paths, modelTypeToZod);
     
-      case "project":
+    case "project":
       return buildSchemaMap(Project.schema.paths, modelTypeToZod);
 
+    case "deliveryNote":
+      return buildSchemaMap(DeliveryNote.schema.paths, modelTypeToZod);
+
     default:
-      throw new Error("Modelo no soportado");
+      //throw AppError.forbidden("Modelo no soportado");
   }
 };
 
