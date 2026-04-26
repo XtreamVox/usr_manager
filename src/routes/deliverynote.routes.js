@@ -18,8 +18,9 @@ import {
   DeliveryNotePaginationAndFilterScheme,
   validateDeliveryNoteIdScheme,
   validateDeleteIdScheme,
-  sortDeleteDeliveryNoteScheme
+  softDeleteDeliveryNoteScheme
   } from "../squemes/deliveryNote.squeme.js";
+import downloadPdf from "../middleware/pdfDownloader.middleware.js";
 
 const router = Router();
 
@@ -27,5 +28,7 @@ router.post("/", authMiddleware, checkForCompany, validate({ body: createDeliver
 router.get("/", authMiddleware, checkForCompany, validate({query : DeliveryNotePaginationAndFilterScheme}) ,getAllDeliveryNotes)
 router.get("/:id", authMiddleware, checkForCompany, validate({params : validateDeliveryNoteIdScheme}), getDeliveryNote)
 router.get("/pdf/:id", authMiddleware, checkForCompany, validate({params : validateDeliveryNoteIdScheme}), getPdfFromDeliveryNote)
-router.patch("/:id/sign", authMiddleware, checkForCompany, validate({params : validateDeliveryNoteIdScheme}), signPdf)
-router.delete("/:id", authMiddleware, checkForCompany, checkRol("admin"), validate({params: validateDeleteIdScheme}), validate({query: sortDeleteDeliveryNoteScheme}), deleteDeliveryNote)
+router.patch("/:id/sign", authMiddleware, checkForCompany, validate({params : validateDeliveryNoteIdScheme}), downloadPdf, signPdf)
+router.delete("/:id", authMiddleware, checkForCompany, checkRol("admin"), validate({params: validateDeleteIdScheme}), validate({query: softDeleteDeliveryNoteScheme}), deleteDeliveryNote)
+
+export default router;
