@@ -25,12 +25,11 @@ const projectSchema = new mongoose.Schema({
     type: String,
     required: true,
   }, // Nombre del proyecto
-  // TODO esto se debería gestionar automaticamente mediante un virtual al crear el objeto
   projectCode:{
     type: String,
     unique: true,
-    required: true
-  }, // Código interno único
+    sparse: true,
+  }, // Código interno único (generado automáticamente)
   address: {
     street: String,
     number: String,
@@ -44,6 +43,31 @@ const projectSchema = new mongoose.Schema({
   // ASK para que sirve esto?
   active: Boolean,
 });
+
+async function generateProjectCode() {
+  // Solo generar si es un documento nuevo y no tiene projectCode
+  if (this.isNew && !this.projectCode) {
+    let isUnique = false;
+
+    while (!isUnique && !this.isNew) {
+      const timestamp = Date.now().toString(36).toUpperCase();
+      const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const projectCode = `PRJ-${timestamp}-${random}`;
+
+      // Verificar que sea único
+      const existing = await mongoose
+        .model("Project")
+        .findOne({ projectCode });
+
+      if (!existing) {
+        this.projectCode = projectCode;
+        isUnique = true;
+      }
+    }
+  }
+}
+// Middleware pre-save para generar automáticamente el projectCode
+projectSchema.pre("save", generateProjectCode);
 
 projectSchema.plugin(softDeletePlugin);
 const Project = mongoose.model("Project", projectSchema);
