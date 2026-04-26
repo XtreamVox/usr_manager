@@ -33,7 +33,7 @@ export const errorHandler = (err, req, res, next) => {
     }));
     return res.status(400).json({
       error: true,
-      message: 'Error de validación',
+      message: 'Error de validación de mongoose',
       code: 'VALIDATION_ERROR',
       details
     });
@@ -66,7 +66,7 @@ export const errorHandler = (err, req, res, next) => {
     }));
     return res.status(400).json({
       error: true,
-      message: 'Error de validación',
+      message: 'Error de validación de zod',
       code: 'VALIDATION_ERROR',
       details
     });

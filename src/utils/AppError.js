@@ -31,7 +31,7 @@ export class AppError extends Error {
     return new AppError(message, 409, code);
   }
   
-  static validation(message = 'Error de validación', details = []) {
+  static validation(message = 'Error de validación de AppError', details = []) {
     const error = new AppError(message, 400, 'VALIDATION_ERROR');
     error.details = details;
     return error;
