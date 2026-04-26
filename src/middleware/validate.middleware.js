@@ -3,7 +3,10 @@ import { AppError } from '../utils/AppError.js';
 
 export const validate = ({ body, query, params }) => async (req, res, next) => {
   try {
-    if (body) req.body = await body.parseAsync(req.body);
+
+    if (body) {
+      req.body = await body.parseAsync(req.body);
+    }
   
     if (query) {
       const parsedQuery = await query.parseAsync(req.query);

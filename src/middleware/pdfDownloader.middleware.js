@@ -1,9 +1,9 @@
 import { application } from "express";
-import { AppError } from "../utils/AppError";
+import { AppError } from "../utils/AppError.js";
 
 //TODO se ejecuta de forma puntual, no es un middleware
 
-const https = require("https");
+import https from "https";
 
 const downloadPdf = (url) => (req, res, next) => {
   https.get(url, (response) => {
