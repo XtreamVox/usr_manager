@@ -4,11 +4,16 @@ import { AppError } from "../utils/AppError.js";
 import { generatePdfBuffer } from "../utils/handlePDF.js";
 import cloudinaryService from "../services/cloudinary.service.js";
 import downloadPdf from "../middleware/pdfDownloader.middleware.js";
+import Client from "../models/client.models.js";
 // TODO reescribir todos los 'findById' por 'findOne' para poder filtrar directamente por la company
 
 export async function createDeliveryNote(req, res, next) {
   try {
-    const note = DeliveryNote.create({
+
+    const client = await Client.findOne({_id: req.body.client, company: req.user.company})
+    if (!client) throw AppError.notFound("No se encontró el cliente")
+
+    const note = await DeliveryNote.create({
       user: req.user._id,
       company: req.user.company,
       ...req.body,
@@ -69,7 +74,7 @@ export async function deleteDeliveryNote(req, res, next) {
     const { soft } = req.query;
     const { id } = req.params;
 
-    const deliveryNote = await DeliveryNote.findOne({_id : id, company = req.user.company});
+    const deliveryNote = await DeliveryNote.findOne({_id : id, company : req.user.company});
     if (!deliveryNote) throw AppError.notFound("No se encontró el albaran");
     if (deliveryNote.signed) throw AppError.forbidden("No se puede eliminar un albaran firmado");
 

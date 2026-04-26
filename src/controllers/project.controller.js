@@ -3,16 +3,13 @@ import Project from "../models/project.models.js";
 import User from "../models/user.models.js";
 import { AppError } from "../utils/AppError.js";
 
-export function createProject(req, res, next) {
+export async function createProject(req, res, next) {
   try {
-    // recibe ObjectIds
-    const { name, client } = req.body;
 
-    const project = Project.create({
+    const project = await Project.create({
       user: req.user,
       company: req.user.company,
-      name: name,
-      client: client,
+      ...req.body
     });
 
     res.status(201).json(project);
@@ -21,24 +18,26 @@ export function createProject(req, res, next) {
   }
 }
 
-export function updateProject(req, res, next) {
+export async function updateProject(req, res, next) {
   try {
     const { id } = req.params;
-    let project = Project.findOne({ _id: id, company: req.user.company });
-    if (!project) throw AppError.notFound("Pryecto no encontrado");
+    let project = await Project.findOne({ _id: id, company: req.user.company });
+    if (!project) throw AppError.notFound("Proyecto no encontrado");
 
-    if (req.user.role == "admin") {
+    // TODO este bloque se debería de poder refactorizar
+    if (req.user.role == "admin" && req.body.user != null) {
       const userToReasign = User.findOne({
         _id: req.body.user,
         company: req.user.company,
       });
       if (!userToReasign) throw AppError.notFound("Usuario no encontrado");
-      project.updateOne(req.body, { new: true });
+      await project.updateOne(req.body, { new: true });
     } else {
       if (req.body.user != null)
         throw AppError.forbidden("Un guest no puede reasignar un proyecto");
-      project.updateOne(req.body, { new: true });
+      await project.updateOne(req.body, { new: true });
     }
+
     res.status(200).json(project);
   } catch (error) {
     next(error);
@@ -50,7 +49,7 @@ export async function getAllProjects(req, res, next) {
     const { limit, sort, page, filter } = req.query;
     const skip = (page - 1) * limit;
     const projects = await Project.find({ filter, company: req.user.company })
-      .populate(["Company", "User", "Client"])
+      .populate(["company", "user", "client"])
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });
@@ -94,10 +93,10 @@ export async function deleteProject(req, res, next) {
     const { soft } = req.query;
     const { id } = req.params;
 
-    const project = Project.findOne({ _id: id, company: req.user.company });
+    const project = await Project.findOne({ _id: id, company: req.user.company });
     if (!project) throw AppError.notFound("Projecto no encontrado");
 
-    if (soft) {
+    if (soft === 'true') {
       await Project.softDeleteById(id);
     } else {
       await Project.hardDelete(id);
@@ -111,7 +110,7 @@ export async function deleteProject(req, res, next) {
 
 export async function listArchivedProjects(req, res, next) {
   try {
-    const projects = Project.findDeleted({ company: req.user.company });
+    const projects = await Project.findDeleted({ company: req.user.company });
     res.status(200).json(projects);
   } catch (error) {
     next(error);
@@ -128,7 +127,7 @@ export async function restoreArchivedProjectById(req, res, next) {
     });
     if (!isDeleted) throw AppError.notFound("No hay cliente archivado");
 
-    const projects = Project.restoreById(id);
+    const projects = await Project.restoreById(id);
     res.status(200).json(projects);
   } catch (error) {
     next(error);

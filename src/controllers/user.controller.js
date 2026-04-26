@@ -79,6 +79,8 @@ export async function registerUser(req, res, next) {
         email: user.email,
         status: user.status,
         role: user.role,
+        id: user._id,
+        verificationCode: user.verificationCode
       },
       accessToken: accessToken,
       refreshToken: refreshToken,
@@ -324,7 +326,7 @@ export async function deleteUser(req, res, next) {
 
     const deleteType = soft ? "soft" : "hard";
 
-    if (soft) {
+    if (soft === 'true') {
       await User.softDeleteById(_id);
     } else {
       await User.hardDelete(_id);
