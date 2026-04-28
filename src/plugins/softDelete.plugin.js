@@ -75,6 +75,7 @@ export const softDeletePlugin = (schema) => {
   
   // Método estático: buscar solo eliminados
   schema.statics.findDeleted = function(filter = {}) {
+    console.log(filter)
     return this.find({ ...filter, deleted: true }).setOptions({ withDeleted: true });
   };
   

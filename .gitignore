@@ -3,3 +3,4 @@ node_modules
 FLUJO_EVENTO_COMPLETO.md
 IMPLEMENTACIÓN_EVENTOS.md
 QUICK_REFERENCE.md
+.dockerignore

@@ -112,7 +112,8 @@ export async function deleteClient(req, res, next) {
 
 export async function listArchivedClients(req, res, next) {
   try {
-    const clients = Client.findDeleted({company: req.user.company});
+    console.log(req.user.company)
+    const clients = await Client.findDeleted({company: req.user.company});
     if(!clients) throw AppError.notFound("Cliente no encontrado")
 
     res.status(200).json(clients);

@@ -29,11 +29,11 @@ import {
 const router = Router()
 
 router.post("/", authMiddleware, validate({body : createClientScheme }), checkForCompany, createClient);
-router.put("/:id", authMiddleware, validate({body : updateClientDataScheme}), validate({params : validateClientIdScheme}), checkForCompany, updateClient);
+router.get("/archived",authMiddleware, checkRol("admin"), checkForCompany, listArchivedClients)
 router.get("/", authMiddleware, validate({query: ClientPaginationAndFilterScheme}), checkForCompany, getAllClients)
+router.put("/:id", authMiddleware, validate({body : updateClientDataScheme}), validate({params : validateClientIdScheme}), checkForCompany, updateClient);
 router.get("/:id", authMiddleware, validate({params: validateClientIdScheme}), checkForCompany, getClient);
 router.delete("/:id", authMiddleware, validate({params: validateDeleteIdScheme}), validate({query: softDeleteClientScheme}), checkForCompany, deleteClient)
-router.get("/archived", authMiddleware, checkRol("admin"), checkForCompany, listArchivedClients)
 router.patch("/:id/restore", authMiddleware, checkRol("admin"), validate({params: validateClientIdScheme}), checkForCompany, restoreArchivedClientById)
 
 export default router;

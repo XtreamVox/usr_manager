@@ -1,17 +1,15 @@
 import DeliveryNote from "../models/deliveryNote.models.js";
 import User from "../models/user.models.js";
 import { AppError } from "../utils/AppError.js";
-import { generatePdfBuffer } from "../utils/handlePDF.js";
+import { generatePdfBuffer, downloadPdf } from "../utils/handlePDF.js";
 import cloudinaryService from "../services/cloudinary.service.js";
-import downloadPdf from "../middleware/pdfDownloader.middleware.js";
 import Client from "../models/client.models.js";
-// TODO reescribir todos los 'findById' por 'findOne' para poder filtrar directamente por la company
 
 export async function createDeliveryNote(req, res, next) {
   try {
 
-    const client = await Client.findOne({_id: req.body.client, company: req.user.company})
-    if (!client) throw AppError.notFound("No se encontró el cliente")
+    const project = await Project.findOne({_id: req.body.project, client: req.body.client})
+    if (!project) throw AppError.notFound("No se encontró el proyecto asociado")
 
     const note = await DeliveryNote.create({
       user: req.user._id,
@@ -107,7 +105,7 @@ export async function getPdfFromDeliveryNote(req, res, next) {
     if (deliveryNote.signed) {
       downloadPdf(deliveryNote.pdfUrl)
       pdf = req.pdf;
-    } else pdf = generatePdfBuffer(deliveryNote);
+    } else pdf = await generatePdfBuffer(deliveryNote);
 
     res.send(pdf);
   } catch (error) {
@@ -128,7 +126,7 @@ export async function signPdf(req, res, next) {
     deliveryNote.signed = true;
     deliveryNote.signedAt = Date.now();
 
-    const pdf = generatePdfBuffer(deliveryNote);
+    const pdf = await generatePdfBuffer(deliveryNote);
     const pdfUrl = await cloudinaryService.uploadPdf(pdf);
 
     deliveryNote.pdfUrl = pdfUrl.secure_url;

@@ -5,6 +5,8 @@ import { AppError } from "../utils/AppError.js";
 
 export async function createProject(req, res, next) {
   try {
+    const client = await Client.findOne({_id: req.body.client, company: req.user.company})
+    if (!client) throw AppError.notFound("No se encontró el cliente")
 
     const project = await Project.create({
       user: req.user,
@@ -24,20 +26,19 @@ export async function updateProject(req, res, next) {
     let project = await Project.findOne({ _id: id, company: req.user.company });
     if (!project) throw AppError.notFound("Proyecto no encontrado");
 
-    // TODO este bloque se debería de poder refactorizar
+    // TODO este bloque se debería de poder refactorizar. Se puede encapsular en un middleware
     if (req.user.role == "admin" && req.body.user != null) {
       const userToReasign = User.findOne({
         _id: req.body.user,
         company: req.user.company,
       });
       if (!userToReasign) throw AppError.notFound("Usuario no encontrado");
-      await project.updateOne(req.body, { new: true });
     } else {
       if (req.body.user != null)
         throw AppError.forbidden("Un guest no puede reasignar un proyecto");
-      await project.updateOne(req.body, { new: true });
     }
-
+    
+    await project.updateOne(req.body, { new: true });
     res.status(200).json(project);
   } catch (error) {
     next(error);
