@@ -20,7 +20,7 @@ import {
   validateDeleteIdScheme,
   softDeleteDeliveryNoteScheme
   } from "../squemes/deliveryNote.squeme.js";
-import downloadPdf from "../middleware/pdfDownloader.middleware.js";
+import { downloadPdf } from "../utils/handlePDF.js";
 
 const router = Router();
 

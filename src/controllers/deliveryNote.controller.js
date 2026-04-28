@@ -4,6 +4,7 @@ import { AppError } from "../utils/AppError.js";
 import { generatePdfBuffer, downloadPdf } from "../utils/handlePDF.js";
 import cloudinaryService from "../services/cloudinary.service.js";
 import Client from "../models/client.models.js";
+import Project from "../models/project.models.js";
 
 export async function createDeliveryNote(req, res, next) {
   try {

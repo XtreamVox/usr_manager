@@ -1,3 +1,5 @@
+import { application } from "express";
+import https from "https";
 import PDFDocument from "pdfkit"
 import cloudinaryService from '../services/cloudinary.service.js'
 import { buffer } from "stream/consumers"
@@ -72,11 +74,6 @@ export const generatePdfBuffer = async (deliveryNote) => {
   });
 };
 
-import { application } from "express";
-
-
-import https from "https";
-
 export const downloadPdf = (url) => {
   https.get(url, (response) => {
       // Verificar que Cloudinary responda con éxito (status 200)
@@ -101,5 +98,3 @@ export const downloadPdf = (url) => {
       throw AppError.internal("Fallo al descargar desde cloudinary")
     });
 };
-
-export default downloadPdf;

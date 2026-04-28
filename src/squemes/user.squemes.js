@@ -2,6 +2,7 @@ import { z } from "zod";
 import { namesSchema, nifSchema, passwordSchema, emailSchema, softOptionSchema } from "./generalUse.squemes.js";
 
 export const registerUserSchema = z.object({
+  name: namesSchema,
   email: emailSchema,
   password: passwordSchema,
 });
