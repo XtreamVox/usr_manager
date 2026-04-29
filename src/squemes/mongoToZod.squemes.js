@@ -124,6 +124,23 @@ export const buildPaginationAndFilterScheme = (schemaMap) =>
           continue;
         }
 
+        if (key === "from" || key === "to") {
+          const result = z.coerce.date().safeParse(value);
+
+          if (!result.success) {
+            result.error.issues.forEach(issue =>
+              ctx.addIssue({
+                ...issue,
+                path: [key],
+              })
+            );
+            continue;
+          }
+
+          parsed[key] = result.data;
+          continue;
+        }
+
         // filtros
         if (!(key in schemaMap)) {
           ctx.addIssue({
