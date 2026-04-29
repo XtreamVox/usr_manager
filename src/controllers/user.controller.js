@@ -12,9 +12,9 @@ import eventEmitter, { EVENTS } from "../services/event.service.js";
 import RefreshToken from "../models/refreshToken.models.js";
 import { randomBytes } from "node:crypto";
 import { sendSlackNotification } from "../utils/handleLogger.js";
-import { uploadAvatar } from "./cloudinary.controller.js";
+import { uploadAvatar } from "../middleware/cloudinary.middleware.js";
 import { sendVerificationEmail } from "../utils/sendEmails.js";
-
+import cloudinaryService from "../services/cloudinary.service.js";
 const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:3000";
 
 export async function getUser(req, res, next) {
@@ -53,10 +53,6 @@ export async function registerUser(req, res, next) {
 
     await user.save();
 
-    // TODO configurar el email sender y comprobar que se envían los emails correctamente.
-    // TODO gestionar el error de envío del email
-    // TODO añadir tiempo de expiración al código de verificación
-    // TODO método para generar un nuevo randomCode para el usuario 
     //await sendVerificationEmail(user.email, randomCode, user.name);
 
     eventEmitter.emit(EVENTS.USER_REGISTERED, {
@@ -269,10 +265,13 @@ export async function updateCompanyLogo(req, res, next) {
       mimetype,
       size,
     });
-
+    const result = await cloudinaryService.uploadAvatar(
+      req.file.buffer,
+      req.user._id
+    );
     const company = await Company.findByIdAndUpdate(
       req.user.company,
-      { logo: fileData.url },
+      { logo: result.secure_url },
       { new: true }
     );
 
