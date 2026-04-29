@@ -1,5 +1,7 @@
 import Client from "../models/client.models.js";
 import Company from "../models/company.models.js";
+import User from "../models/user.models.js";
+import { AppError } from "../utils/AppError.js";
 
 export const checkForCompany = async (req, res, next) => {
   try {
@@ -14,7 +16,7 @@ export const checkForCompany = async (req, res, next) => {
 export const validateProjectUpdate = async (req, res, next) => {
   try {
     if (req.user.role == "admin" && req.body.user != null) {
-      const userToReasign = User.findOne({
+      const userToReasign = await User.findOne({
         _id: req.body.user,
         company: req.user.company,
       });
@@ -23,6 +25,7 @@ export const validateProjectUpdate = async (req, res, next) => {
       if (req.body.user != null)
         throw AppError.forbidden("Un guest no puede reasignar un proyecto");
     }
+    next();
   } catch (error) {
     next(error)
   }
