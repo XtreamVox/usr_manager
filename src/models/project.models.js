@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 import { softDeletePlugin } from "../plugins/softDelete.plugin.js";
 
-// TODO Optimizar esquema
 const projectSchema = new mongoose.Schema({
   // ref: 'User' — usuario que lo creó
   user: {
@@ -25,7 +24,7 @@ const projectSchema = new mongoose.Schema({
     type: String,
     required: true,
   }, // Nombre del proyecto
-  projectCode:{
+  projectCode: {
     type: String,
     unique: true,
     sparse: true,
@@ -37,7 +36,11 @@ const projectSchema = new mongoose.Schema({
     city: String,
     province: String,
   },
-  email: String, // Email de contacto del proyecto
+  email: {
+    type: String,
+    unique: true,
+    required: true,
+  }, // Email de contacto del proyecto
   notes: String, // Notas adicionales
   active: Boolean,
 });
@@ -47,15 +50,13 @@ async function generateProjectCode() {
   if (this.isNew && !this.projectCode) {
     let isUnique = false;
 
-    while (!isUnique && !this.isNew) {
+    while (!isUnique && this.isNew) {
       const timestamp = Date.now().toString(36).toUpperCase();
       const random = Math.random().toString(36).substring(2, 8).toUpperCase();
       const projectCode = `PRJ-${timestamp}-${random}`;
 
       // Verificar que sea único
-      const existing = await mongoose
-        .model("Project")
-        .findOne({ projectCode });
+      const existing = await mongoose.model("Project").findOne({ projectCode });
 
       if (!existing) {
         this.projectCode = projectCode;
@@ -66,7 +67,9 @@ async function generateProjectCode() {
 }
 // Middleware pre-save para generar automáticamente el projectCode
 projectSchema.pre("save", generateProjectCode);
-
 projectSchema.plugin(softDeletePlugin);
+
+projectSchema.index({ email: 1 }, { unique: true });
+
 const Project = mongoose.model("Project", projectSchema);
 export default Project;

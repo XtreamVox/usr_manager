@@ -1,7 +1,6 @@
 import mongoose from 'mongoose';
 import { softDeletePlugin } from '../plugins/softDelete.plugin.js';
 
-// TODO Optimizar esquema
 const clientSchema = new mongoose.Schema({
   // ref: 'User' — usuario que lo creó
   user: {
@@ -18,8 +17,16 @@ const clientSchema = new mongoose.Schema({
     required: true
   },       
   name: String,            // Nombre del cliente
-  cif: String,             // CIF/NIF del cliente
-  email: String,
+  cif: {
+    type: String,
+    required: true,
+    unique: true
+  },             // CIF/NIF del cliente
+  email: {
+    type: String,
+    required: true,
+    unique: true
+  },
   phone: String,
   address: {
     street: String,
@@ -32,6 +39,9 @@ const clientSchema = new mongoose.Schema({
 
 clientSchema.plugin(softDeletePlugin);
 
+
+clientSchema.index({ email: 1 }, { unique: true });
+clientSchema.index({ cif: 1 }, { unique: true });
 
 const Client = mongoose.model('Client', clientSchema);
 export default Client;

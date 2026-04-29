@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 import { softDeletePlugin } from "../plugins/softDelete.plugin.js";
 
-// TODO Optimizar esquema
 const deliveryNoteSchema = new mongoose.Schema(
   {
     // ref: 'User' — usuario que crea
@@ -78,6 +77,10 @@ const deliveryNoteSchema = new mongoose.Schema(
 );
 
 deliveryNoteSchema.plugin(softDeletePlugin);
+
+deliveryNoteSchema.index({ format: 1, workDate: -1 });
+deliveryNoteSchema.index({ user: 1 });
+
 
 const DeliveryNote = mongoose.model("DeliveryNote", deliveryNoteSchema);
 
