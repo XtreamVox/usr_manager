@@ -10,7 +10,12 @@ export const validate = ({ body, query, params }) => async (req, res, next) => {
   
     if (query) {
       const parsedQuery = await query.parseAsync(req.query);
-      Object.assign(req.query, parsedQuery);
+      Object.defineProperty(req, "query", {
+        value: parsedQuery,
+        writable: true,
+        configurable: true,
+        enumerable: true,
+      });
     }
 
     if (params) {
