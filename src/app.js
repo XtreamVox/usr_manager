@@ -1,5 +1,6 @@
 import express from 'express';
 import helmet from 'helmet';
+import swaggerUi from 'swagger-ui-express';
 import { sanitizeBody } from './middleware/sanitize.middleware.js';
 import limiter from './middleware/rateLimit.middleware.js';
 import { join } from 'node:path';
@@ -8,11 +9,14 @@ import { errorHandler, notFound } from './middleware/error-handler.middleware.js
 import { initializeNotificationListeners } from './services/notification.service.js';
 import morganBody from 'morgan-body';
 import { loggerStream } from './utils/handleLogger.js';
+import { swaggerSpec } from './config/swagger.js';
 
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Después de express.json(), antes de las rutas
 morganBody(app, {

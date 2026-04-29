@@ -12,7 +12,6 @@ import eventEmitter, { EVENTS } from "../services/event.service.js";
 import RefreshToken from "../models/refreshToken.models.js";
 import { randomBytes } from "node:crypto";
 import { sendSlackNotification } from "../utils/handleLogger.js";
-import { uploadAvatar } from "../middleware/cloudinary.middleware.js";
 import { sendVerificationEmail } from "../utils/sendEmails.js";
 import cloudinaryService from "../services/cloudinary.service.js";
 const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:3000";
