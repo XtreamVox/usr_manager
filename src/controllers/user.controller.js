@@ -20,7 +20,7 @@ export async function getUser(req, res, next) {
   try {
     const user_id = req.user._id;
 
-    const user = await User.findById(user_id).populate('company', 'name');
+    const user = await User.findById(user_id).populate("company", "name");
 
     if (!user) {
       throw AppError.notFound("Usuario");
@@ -248,7 +248,6 @@ export async function updateCompanyData(req, res, next) {
 }
 
 
-// TODO subir el logo a cloudinary
 export async function updateCompanyLogo(req, res, next) {
   try {
     if (!req.file) {
@@ -326,7 +325,7 @@ export async function deleteUser(req, res, next) {
 
     const deleteType = soft ? "soft" : "hard";
 
-    if (soft === 'true') {
+    if (soft) {
       await User.softDeleteById(_id);
     } else {
       await User.hardDelete(_id);
