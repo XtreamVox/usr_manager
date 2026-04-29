@@ -304,7 +304,7 @@ describe("User Endpoints", () => {
       const res = await request(app).get("/api/user").set(authHeader);
 
       expect(res.status).toBe(200);
-      expect(populate).toHaveBeenCalledWith("company");
+      expect(populate).toHaveBeenCalledWith("company", "name");
       expect(res.body.company.name).toBe("Acme");
     });
   });
