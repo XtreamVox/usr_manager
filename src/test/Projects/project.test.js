@@ -226,23 +226,49 @@ describe("Project Endpoints", () => {
 
       expect(res.status).toBe(200);
       expect(mockProject.find).toHaveBeenCalledWith({
-        filter: undefined,
         company: authUser.company,
       });
-      expect(chain.populate).toHaveBeenCalledWith(["company", "user", "client"]);
+      expect(mockProject.countDocuments).toHaveBeenCalledWith({
+        company: authUser.company,
+      });
+      expect(chain.populate).toHaveBeenCalledWith("company", "name");
+      expect(chain.populate).toHaveBeenCalledWith("user", "name");
+      expect(chain.populate).toHaveBeenCalledWith("client", "name");
       expect(chain.skip).toHaveBeenCalledWith(0);
-      expect(chain.limit).toHaveBeenCalledWith("10");
+      expect(chain.limit).toHaveBeenCalledWith(10);
       expect(chain.sort).toHaveBeenCalledWith({ createdAt: -1 });
       expect(res.body).toEqual({
         data: projects,
         pagination: {
           total: 1,
-          page: "1",
-          limit: "10",
+          page: 1,
+          limit: 10,
           totalPages: 1,
           hasNextPage: false,
           hasPrevPage: false,
         },
+      });
+    });
+
+    it("uses filters and company scope for project pagination totals", async () => {
+      const projects = [{ _id: projectId, name: "Project Alpha" }];
+      const chain = mockFindChain(projects);
+      mockProject.find.mockReturnValue(chain);
+      mockProject.countDocuments.mockResolvedValue(1);
+
+      const res = await request(app)
+        .get("/api/project")
+        .set(authHeader)
+        .query({ page: "1", limit: "10", active: "true" });
+
+      expect(res.status).toBe(200);
+      expect(mockProject.find).toHaveBeenCalledWith({
+        active: true,
+        company: authUser.company,
+      });
+      expect(mockProject.countDocuments).toHaveBeenCalledWith({
+        active: true,
+        company: authUser.company,
       });
     });
 

@@ -1,7 +1,6 @@
 import { transporter } from "../config/emailSender.js";
 import { AppError } from "./AppError.js";
 
-//TODO configurar slack de errores
 
 export async function sendVerificationEmail(to, code, name) {
   const mailOptions = {

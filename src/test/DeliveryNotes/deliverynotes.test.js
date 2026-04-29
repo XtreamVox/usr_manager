@@ -26,6 +26,8 @@ const mockDeliveryNote = {
   find: jest.fn(),
   findOne: jest.fn(),
   countDocuments: jest.fn(),
+  softDeleteById: jest.fn(),
+  hardDelete: jest.fn(),
 };
 
 const mockProject = {
@@ -145,13 +147,7 @@ describe("Delivery Note Endpoints", () => {
     mockVerifyAccessToken.mockReturnValue({ _id: authUser._id });
     mockUser.findById.mockResolvedValue(authUser);
     mockGeneratePdfBuffer.mockResolvedValue(Buffer.from("pdf-buffer"));
-    mockDownloadPdf.mockImplementation((reqOrUrl, res, next) => {
-      if (typeof next === "function") {
-        reqOrUrl.file = { buffer: Buffer.from("signature-buffer") };
-        return next();
-      }
-      return undefined;
-    });
+    mockDownloadPdf.mockReturnValue(undefined);
   });
 
   afterEach(() => {
@@ -179,6 +175,7 @@ describe("Delivery Note Endpoints", () => {
       expect(mockProject.findOne).toHaveBeenCalledWith({
         _id: projectId,
         client: clientId,
+        company: authUser.company,
       });
       expect(mockDeliveryNote.create).toHaveBeenCalledWith(expect.objectContaining({
         user: authUser._id,
@@ -221,6 +218,23 @@ describe("Delivery Note Endpoints", () => {
           workers: hoursPayload.workers,
         }),
       );
+    });
+
+    it("does not create delivery notes for projects outside the authenticated company", async () => {
+      mockProject.findOne.mockResolvedValue(null);
+
+      const res = await request(app)
+        .post("/api/deliverynote")
+        .set(authHeader)
+        .send(materialPayload);
+
+      expect(res.status).toBe(404);
+      expect(mockProject.findOne).toHaveBeenCalledWith({
+        _id: projectId,
+        client: clientId,
+        company: authUser.company,
+      });
+      expect(mockDeliveryNote.create).not.toHaveBeenCalled();
     });
 
     it("returns 404 when the project is not associated with the client", async () => {
@@ -269,25 +283,63 @@ describe("Delivery Note Endpoints", () => {
         workDate: { $gt: undefined, $lt: undefined },
         company: authUser.company,
       });
-      expect(chain.populate).toHaveBeenCalledWith([
-        "Company",
-        "User",
-        "Client",
-        "Project",
-      ]);
+      expect(mockDeliveryNote.countDocuments).toHaveBeenCalledWith({
+        workDate: { $gt: undefined, $lt: undefined },
+        company: authUser.company,
+      });
+      expect(chain.populate).toHaveBeenCalledWith("Company", "description");
+      expect(chain.populate).toHaveBeenCalledWith("User", "description");
+      expect(chain.populate).toHaveBeenCalledWith("Client", "description");
+      expect(chain.populate).toHaveBeenCalledWith("Project", "description");
       expect(chain.skip).toHaveBeenCalledWith(0);
-      expect(chain.limit).toHaveBeenCalledWith("10");
+      expect(chain.limit).toHaveBeenCalledWith(10);
       expect(chain.sort).toHaveBeenCalledWith({ createdAt: -1 });
       expect(res.body).toEqual({
         data: notes,
         pagination: {
           total: 1,
-          page: "1",
-          limit: "10",
+          page: 1,
+          limit: 10,
           totalPages: 1,
           hasNextPage: false,
           hasPrevPage: false,
         },
+      });
+    });
+
+    it("uses filters, date range and company scope for delivery note pagination totals", async () => {
+      const notes = [{ _id: deliveryNoteId, company: authUser.company }];
+      const chain = mockFindChain(notes);
+      mockDeliveryNote.find.mockReturnValue(chain);
+      mockDeliveryNote.countDocuments.mockResolvedValue(1);
+
+      const res = await request(app)
+        .get("/api/deliverynote")
+        .set(authHeader)
+        .query({
+          page: "1",
+          limit: "10",
+          format: "material",
+          from: "2026-01-01",
+          to: "2026-01-31",
+        });
+
+      expect(res.status).toBe(200);
+      expect(mockDeliveryNote.find).toHaveBeenCalledWith({
+        format: "material",
+        workDate: {
+          $gt: new Date("2026-01-01"),
+          $lt: new Date("2026-01-31"),
+        },
+        company: authUser.company,
+      });
+      expect(mockDeliveryNote.countDocuments).toHaveBeenCalledWith({
+        format: "material",
+        workDate: {
+          $gt: new Date("2026-01-01"),
+          $lt: new Date("2026-01-31"),
+        },
+        company: authUser.company,
       });
     });
 
@@ -375,7 +427,11 @@ describe("Delivery Note Endpoints", () => {
 
       const res = await request(app)
         .patch(`/api/deliverynote/${deliveryNoteId}/sign`)
-        .set(authHeader);
+        .set(authHeader)
+        .attach("signature", Buffer.from("signature-buffer"), {
+          filename: "signature.png",
+          contentType: "image/png",
+        });
 
       expect(res.status).toBe(200);
       expect(mockCloudinaryService.uploadImage).toHaveBeenCalledWith(
@@ -399,6 +455,17 @@ describe("Delivery Note Endpoints", () => {
         }),
       );
     });
+
+    it("rejects signing a delivery note without a signature file", async () => {
+      const res = await request(app)
+        .patch(`/api/deliverynote/${deliveryNoteId}/sign`)
+        .set(authHeader);
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toBe("Archivo de firma requerido");
+      expect(mockDeliveryNote.findOne).not.toHaveBeenCalled();
+      expect(mockCloudinaryService.uploadImage).not.toHaveBeenCalled();
+    });
   });
 
   describe("DELETE /api/deliverynote/:id", () => {
@@ -420,20 +487,19 @@ describe("Delivery Note Endpoints", () => {
       const note = {
         _id: deliveryNoteId,
         signed: false,
-        softDeleteById: jest.fn().mockResolvedValue(undefined),
-        hardDelete: jest.fn().mockResolvedValue(undefined),
       };
       mockDeliveryNote.findOne.mockResolvedValue(note);
+      mockDeliveryNote.softDeleteById.mockResolvedValue(undefined);
 
       const res = await request(app)
         .delete(`/api/deliverynote/${deliveryNoteId}`)
         .set(authHeader)
         .query({ soft: "true" });
 
-      expect(note.softDeleteById).toHaveBeenCalledWith(deliveryNoteId);
-      expect(note.hardDelete).not.toHaveBeenCalled();
-      expect(res.status).toBe(500);
-      expect(res.body.message).toBe("client is not defined");
+      expect(mockDeliveryNote.softDeleteById).toHaveBeenCalledWith(deliveryNoteId);
+      expect(mockDeliveryNote.hardDelete).not.toHaveBeenCalled();
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(note);
     });
 
     it("blocks non-admin users before deleting", async () => {

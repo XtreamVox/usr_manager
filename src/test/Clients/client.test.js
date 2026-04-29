@@ -161,7 +161,7 @@ describe("Client Endpoints", () => {
         cif: "B12345678",
         email: "client@example.com",
         phone: "600123123",
-        address: "600123123",
+        address: validClientPayload.address,
       });
       expect(res.body).toEqual(createdClient);
     });
@@ -215,20 +215,46 @@ describe("Client Endpoints", () => {
 
       expect(res.status).toBe(200);
       expect(mockClient.find).toHaveBeenCalledWith({ company: authUser.company });
-      expect(chain.populate).toHaveBeenCalledWith(["company", "user"]);
+      expect(mockClient.countDocuments).toHaveBeenCalledWith({
+        company: authUser.company,
+      });
+      expect(chain.populate).toHaveBeenCalledWith("company", "name");
+      expect(chain.populate).toHaveBeenCalledWith("user", "name");
       expect(chain.skip).toHaveBeenCalledWith(0);
-      expect(chain.limit).toHaveBeenCalledWith("10");
+      expect(chain.limit).toHaveBeenCalledWith(10);
       expect(chain.sort).toHaveBeenCalledWith({ createdAt: -1 });
       expect(res.body).toEqual({
         data: clients,
         pagination: {
           total: 1,
-          page: "1",
-          limit: "10",
+          page: 1,
+          limit: 10,
           totalPages: 1,
           hasNextPage: false,
           hasPrevPage: false,
         },
+      });
+    });
+
+    it("uses the authenticated company and filters for pagination totals", async () => {
+      const clients = [{ _id: clientId, name: "Acme Client" }];
+      const chain = mockFindChain(clients);
+      mockClient.find.mockReturnValue(chain);
+      mockClient.countDocuments.mockResolvedValue(1);
+
+      const res = await request(app)
+        .get("/api/client")
+        .set(authHeader)
+        .query({ page: "1", limit: "10", name: "Acme Client" });
+
+      expect(res.status).toBe(200);
+      expect(mockClient.find).toHaveBeenCalledWith({
+        name: "Acme Client",
+        company: authUser.company,
+      });
+      expect(mockClient.countDocuments).toHaveBeenCalledWith({
+        name: "Acme Client",
+        company: authUser.company,
       });
     });
 
@@ -280,10 +306,12 @@ describe("Client Endpoints", () => {
         cif: "B87654321",
         email: "updated@example.com",
       };
-      mockClient.findByIdAndUpdate.mockResolvedValue({
+      const client = {
         _id: clientId,
         ...updatePayload,
-      });
+        updateOne: jest.fn().mockResolvedValue(undefined),
+      };
+      mockClient.findOne.mockResolvedValue(client);
 
       const res = await request(app)
         .put(`/api/client/${clientId}`)
@@ -291,11 +319,11 @@ describe("Client Endpoints", () => {
         .send(updatePayload);
 
       expect(res.status).toBe(200);
-      expect(mockClient.findByIdAndUpdate).toHaveBeenCalledWith(
-        clientId,
-        updatePayload,
-        { new: true },
-      );
+      expect(mockClient.findOne).toHaveBeenCalledWith({
+        _id: clientId,
+        company: authUser.company,
+      });
+      expect(client.updateOne).toHaveBeenCalledWith(updatePayload);
       expect(res.body).toEqual(updatePayload);
     });
 
