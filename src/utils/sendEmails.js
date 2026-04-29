@@ -1,9 +1,12 @@
 import { transporter } from "../config/emailSender.js";
+import { AppError } from "./AppError.js";
+
+//TODO configurar slack de errores
 
 export async function sendVerificationEmail(to, code, name) {
   const mailOptions = {
     from: `"Tu App" <${process.env.EMAIL_USER}>`,
-    to,
+    to: to,
     subject: "Código de verificación",
     html: `
       <h2>Hola ${name}</h2>
@@ -13,6 +16,9 @@ export async function sendVerificationEmail(to, code, name) {
     `,
   };
 
-  
-  await transporter.sendMail(mailOptions);
+  await transporter.sendMail(mailOptions, function (err, data) {
+    if (err) {
+      throw AppError.internal();
+    }
+  });
 }

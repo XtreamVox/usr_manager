@@ -252,6 +252,8 @@ export async function updateCompanyData(req, res, next) {
   }
 }
 
+
+// TODO subir el logo a cloudinary
 export async function updateCompanyLogo(req, res, next) {
   try {
     if (!req.file) {
