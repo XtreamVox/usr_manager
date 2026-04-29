@@ -50,6 +50,7 @@ async function generateProjectCode() {
   if (this.isNew && !this.projectCode) {
     let isUnique = false;
 
+    // si no es único y es nuevo entra
     while (!isUnique && this.isNew) {
       const timestamp = Date.now().toString(36).toUpperCase();
       const random = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -68,8 +69,6 @@ async function generateProjectCode() {
 // Middleware pre-save para generar automáticamente el projectCode
 projectSchema.pre("save", generateProjectCode);
 projectSchema.plugin(softDeletePlugin);
-
-projectSchema.index({ email: 1 }, { unique: true });
 
 const Project = mongoose.model("Project", projectSchema);
 export default Project;

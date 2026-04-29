@@ -39,10 +39,6 @@ const clientSchema = new mongoose.Schema({
 
 clientSchema.plugin(softDeletePlugin);
 
-
-clientSchema.index({ email: 1 }, { unique: true });
-clientSchema.index({ cif: 1 }, { unique: true });
-
 const Client = mongoose.model('Client', clientSchema);
 export default Client;
 
