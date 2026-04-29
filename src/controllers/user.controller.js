@@ -21,7 +21,7 @@ export async function getUser(req, res, next) {
   try {
     const user_id = req.user._id;
 
-    const user = await User.findById(user_id).populate("company");
+    const user = await User.findById(user_id).populate('company', 'name');
 
     if (!user) {
       throw AppError.notFound("Usuario");

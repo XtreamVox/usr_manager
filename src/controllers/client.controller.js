@@ -45,13 +45,13 @@ export async function updateClient(req, res, next) {
   }
 }
 
-//TODO los populate solo deben mostrar cierta información
 export async function getAllClients(req, res, next) {
   try {
     const { limit, sort, page, filter } = req.query;
     const skip = (page - 1) * limit;
     const clients = await Client.find({...filter, company: req.user.company})
-      .populate(["company", "user"])
+      .populate('company', 'name')
+      .populate('user', 'name')
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });

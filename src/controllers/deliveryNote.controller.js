@@ -33,7 +33,10 @@ export async function getAllDeliveryNotes(req, res, next) {
       workDate: { $gt: from, $lt: to },
       company: req.user.company,
     })
-      .populate(["Company", "User", "Client", "Project"])
+      .populate('Company', 'name')
+      .populate('User', 'name')
+      .populate('Client', 'name')
+      .populate('Project', 'name')
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });

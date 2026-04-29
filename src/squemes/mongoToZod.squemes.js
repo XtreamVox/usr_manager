@@ -11,7 +11,7 @@ const listPaginationScheme = z.object({
   limit: z.coerce.number().min(1).max(100).default(10),
   page: z.coerce.number().min(1).default(1),
 });
-// TODO sustituir los switch por un comportamiento dinámico
+
 const modelTypeToZod = (instance, path) => {
   switch (instance) {
     case "String":

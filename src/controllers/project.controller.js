@@ -25,18 +25,6 @@ export async function updateProject(req, res, next) {
     const { id } = req.params;
     let project = await Project.findOne({ _id: id, company: req.user.company });
     if (!project) throw AppError.notFound("Proyecto no encontrado");
-
-    // TODO este bloque se debería de poder refactorizar. Se puede encapsular en un middleware
-    if (req.user.role == "admin" && req.body.user != null) {
-      const userToReasign = User.findOne({
-        _id: req.body.user,
-        company: req.user.company,
-      });
-      if (!userToReasign) throw AppError.notFound("Usuario no encontrado");
-    } else {
-      if (req.body.user != null)
-        throw AppError.forbidden("Un guest no puede reasignar un proyecto");
-    }
     
     await project.updateOne(req.body, { new: true });
     res.status(200).json(project);
@@ -50,7 +38,9 @@ export async function getAllProjects(req, res, next) {
     const { limit, sort, page, filter } = req.query;
     const skip = (page - 1) * limit;
     const projects = await Project.find({ filter, company: req.user.company })
-      .populate(["company", "user", "client"])
+      .populate('company', 'name')
+      .populate('user', 'name')
+      .populate('client', 'name')
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });

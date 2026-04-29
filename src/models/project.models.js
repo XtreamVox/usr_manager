@@ -38,9 +38,7 @@ const projectSchema = new mongoose.Schema({
     province: String,
   },
   email: String, // Email de contacto del proyecto
-  // ASK necesito más info para saber cómo tratarlo
   notes: String, // Notas adicionales
-  // ASK para que sirve esto?
   active: Boolean,
 });
 

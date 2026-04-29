@@ -7,12 +7,14 @@ const clientSchema = new mongoose.Schema({
   user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
+      unique: true,
       required: true
   },       
   // ref: 'Company' — compañía a la que pertenece   
   company: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Company',
+    unique: true,
     required: true
   },       
   name: String,            // Nombre del cliente
