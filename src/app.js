@@ -21,7 +21,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // Después de express.json(), antes de las rutas
 morganBody(app, {
   noColors: true,
-  skip: (req, res) => res.statusCode < 400, // Solo errores
+  skip: (req, res) => res.statusCode < 500, // Solo errores
   stream: loggerStream
 });
 app.use(helmet());
