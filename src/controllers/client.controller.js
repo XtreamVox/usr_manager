@@ -21,7 +21,7 @@ export async function createClient(req, res, next) {
       cif: cif,
       email: email,
       phone: phone,
-      address: phone,
+      address: address,
     });
     res.status(201).json(client);
   } catch (error) {
@@ -36,8 +36,9 @@ export async function updateClient(req, res, next) {
     const obj = req.body;
 
     // recuperar el client y actualizar
-    const client = await Client.findByIdAndUpdate(id, obj,{ new : true });
+    const client = await Client.findOne({_id : id, company : req.user.company});
     if(!client) throw AppError.notFound("Cliente no encontrado")
+    await client.updateOne(obj);
 
     res.status(200).json(obj);
   } catch (error) {
@@ -47,16 +48,17 @@ export async function updateClient(req, res, next) {
 
 export async function getAllClients(req, res, next) {
   try {
-    const { limit, sort, page, filter } = req.query;
+    const { limit, sort, page, filters } = req.query;
+    const query = { ...filters, company: req.user.company };
     const skip = (page - 1) * limit;
-    const clients = await Client.find({...filter, company: req.user.company})
-      .populate('company', 'name')
-      .populate('user', 'name')
+    const clients = await Client.find(query)
+      .populate("company", "name")
+      .populate("user", "name")
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });
 
-    const total = await Client.countDocuments();
+    const total = await Client.countDocuments(query);
     res.json({
       data: clients,
       pagination: {
@@ -92,10 +94,10 @@ export async function deleteClient(req, res, next) {
     const { id } = req.params;
     
     
-    const client = Client.findOne({_id: id, company: req.user.company});
+    const client = await Client.findOne({_id: id, company: req.user.company});
     if(!client) throw AppError.notFound("Cliente no encontrado")
 
-    if (soft === 'true') {
+    if (soft) {
       await Client.softDeleteById(id);
     } else {
       await Client.hardDelete(id);

@@ -35,17 +35,18 @@ export async function updateProject(req, res, next) {
 
 export async function getAllProjects(req, res, next) {
   try {
-    const { limit, sort, page, filter } = req.query;
+    const { limit, sort, page, filters } = req.query;
+    const query = { ...filters, company: req.user.company };
     const skip = (page - 1) * limit;
-    const projects = await Project.find({ filter, company: req.user.company })
-      .populate('company', 'name')
-      .populate('user', 'name')
-      .populate('client', 'name')
+    const projects = await Project.find(query)
+      .populate("company", "name")
+      .populate("user", "name")
+      .populate("client", "name")
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });
 
-    const total = await Project.countDocuments();
+    const total = await Project.countDocuments(query);
     res.json({
       data: projects,
       pagination: {
@@ -87,7 +88,7 @@ export async function deleteProject(req, res, next) {
     const project = await Project.findOne({ _id: id, company: req.user.company });
     if (!project) throw AppError.notFound("Projecto no encontrado");
 
-    if (soft === 'true') {
+    if (soft) {
       await Project.softDeleteById(id);
     } else {
       await Project.hardDelete(id);
