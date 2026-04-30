@@ -155,11 +155,15 @@ export async function signPdf(req, res, next) {
     if (!req.file) throw AppError.badRequest("Archivo de firma requerido");
 
     const binarySignature = req.file.buffer;
-    const deliveryNote = await DeliveryNote.findOne({
+    const query = DeliveryNote.findOne({
       _id: id,
       company: req.user.company,
     });
+    const deliveryNote = await query.populate(["client", "project"]);
+
     if (!deliveryNote) throw AppError.notFound("No se encontró el albaran");
+    if (deliveryNote.signed)
+      throw AppError.forbidden("No se puede volver a firmar un albaran firmado");
 
     const firmaUrl = await cloudinaryService.uploadImage(binarySignature);
 

@@ -7,14 +7,12 @@ import {
 } from "../utils/handleJWT.js";
 import { compare, encrypt } from "../utils/handlePassword.js";
 import Company from "../models/company.models.js";
-import Storage from "../models/storage.models.js";
 import eventEmitter, { EVENTS } from "../services/event.service.js";
 import RefreshToken from "../models/refreshToken.models.js";
 import { randomBytes } from "node:crypto";
 import { sendSlackNotification } from "../utils/handleLogger.js";
 import { sendVerificationEmail } from "../utils/sendEmails.js";
 import cloudinaryService from "../services/cloudinary.service.js";
-const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:3000";
 
 export async function getUser(req, res, next) {
   try {
@@ -253,15 +251,6 @@ export async function updateCompanyLogo(req, res, next) {
       throw AppError.badRequest("No se subió ningún archivo");
     }
 
-    const { filename, originalname, mimetype, size } = req.file;
-
-    const fileData = await Storage.create({
-      filename,
-      originalName: originalname,
-      url: `${PUBLIC_URL}/uploads/${filename}`,
-      mimetype,
-      size,
-    });
     const result = await cloudinaryService.uploadAvatar(
       req.file.buffer,
       req.user._id
@@ -276,7 +265,12 @@ export async function updateCompanyLogo(req, res, next) {
       throw AppError.notFound("Compañía");
     }
 
-    res.status(201).json({ data: fileData });
+    res.status(201).json({
+      data: {
+        company,
+        logo: result.secure_url,
+      },
+    });
   } catch (error) {
 
     next(error);

@@ -59,11 +59,14 @@ export const generatePdfBuffer = async (deliveryNote) => {
       deliveryNote.material?.data?.forEach((m) => {
         doc.text(`Nombre: ${m.name} | Cantidad: ${m.quantity}`);
       });
-
-      if (deliveryNote.signed) {
-        // recoger imagen firma cloudinary
-        doc.image(deliveryNote.signatureUrl);
-      }
+    } else {
+      deliveryNote.workers?.data?.forEach((m) => {
+        doc.text(`Nombre: ${m.name} | Horas: ${m.hours}`);
+      });
+    }
+    if (deliveryNote.signed) {
+      // recoger imagen firma cloudinary
+      doc.image(deliveryNote.signatureUrl);
     }
 
     doc.end();
@@ -80,11 +83,18 @@ export const downloadPdf = (url, redirects = 0) => {
       .get(url, (response) => {
         const { statusCode, headers } = response;
 
-        if ([301, 302, 303, 307, 308].includes(statusCode) && headers.location) {
+        if (
+          [301, 302, 303, 307, 308].includes(statusCode) &&
+          headers.location
+        ) {
           response.resume();
 
           if (redirects >= 3) {
-            reject(AppError.badRequest("Demasiadas redirecciones al descargar el PDF"));
+            reject(
+              AppError.badRequest(
+                "Demasiadas redirecciones al descargar el PDF",
+              ),
+            );
             return;
           }
 
@@ -94,7 +104,11 @@ export const downloadPdf = (url, redirects = 0) => {
 
         if (statusCode !== 200) {
           response.resume();
-          reject(AppError.badRequest("Cloudinary no responde o no encontró el archivo"));
+          reject(
+            AppError.badRequest(
+              "Cloudinary no responde o no encontró el archivo",
+            ),
+          );
           return;
         }
 

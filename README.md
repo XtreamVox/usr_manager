@@ -773,12 +773,12 @@ Formats: JPG, PNG, GIF, WebP
 ```json
 {
   "data": {
-    "filename": "logo-1234567890.jpg",
-    "originalName": "company-logo.jpg",
-    "url": "http://localhost:3000/uploads/logo-1234567890.jpg",
-    "mimetype": "image/jpeg",
-    "size": 245000,
-    "...": "..."
+    "logo": "https://res.cloudinary.com/demo/image/upload/v1714380000/logo.png",
+    "company": {
+      "_id": "65f1f77bcf3f1b8ad2f45c11",
+      "name": "Construcciones Norte SL",
+      "logo": "https://res.cloudinary.com/demo/image/upload/v1714380000/logo.png"
+    }
   }
 }
 ```

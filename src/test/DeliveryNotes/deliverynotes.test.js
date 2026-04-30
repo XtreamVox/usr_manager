@@ -464,6 +464,27 @@ describe("Delivery Note Endpoints", () => {
       expect(mockDeliveryNote.findOne).not.toHaveBeenCalled();
       expect(mockCloudinaryService.uploadImage).not.toHaveBeenCalled();
     });
+
+    it("rejects signing an already signed delivery note", async () => {
+      mockDeliveryNote.findOne.mockResolvedValue({
+        _id: deliveryNoteId,
+        company: authUser.company,
+        signed: true,
+      });
+
+      const res = await request(app)
+        .patch(`/api/deliverynote/${deliveryNoteId}/sign`)
+        .set(authHeader)
+        .attach("signature", Buffer.from("signature-buffer"), {
+          filename: "signature.png",
+          contentType: "image/png",
+        });
+
+      expect(res.status).toBe(403);
+      expect(res.body.message).toBe("No se puede volver a firmar un albaran firmado");
+      expect(mockCloudinaryService.uploadImage).not.toHaveBeenCalled();
+      expect(mockCloudinaryService.uploadPdf).not.toHaveBeenCalled();
+    });
   });
 
   describe("DELETE /api/deliverynote/:id", () => {

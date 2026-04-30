@@ -491,9 +491,11 @@
  *           application/json:
  *             example:
  *               data:
- *                 filename: "logo-1714380000000.png"
- *                 originalName: "logo.png"
- *                 url: "http://localhost:3000/uploads/logo-1714380000000.png"
+ *                 logo: "https://res.cloudinary.com/demo/image/upload/v1714380000/logo.png"
+ *                 company:
+ *                   _id: "65f1f77bcf3f1b8ad2f45c11"
+ *                   name: "Construcciones Norte SL"
+ *                   logo: "https://res.cloudinary.com/demo/image/upload/v1714380000/logo.png"
  *       400: { $ref: '#/components/responses/BadRequest' }
  *       401: { $ref: '#/components/responses/Unauthorized' }
  *       403: { $ref: '#/components/responses/Forbidden' }
