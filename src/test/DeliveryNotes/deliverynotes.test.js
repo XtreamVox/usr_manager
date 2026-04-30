@@ -197,7 +197,7 @@ describe("Delivery Note Endpoints", () => {
         format: "hours",
         workers: {
           hours: 8,
-          workers: [{ name: "Worker One", hours: 8 }],
+          data: [{ name: "Worker One", hours: 8 }],
         },
       };
       mockProject.findOne.mockResolvedValue({ _id: projectId, client: clientId });

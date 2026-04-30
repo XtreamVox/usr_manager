@@ -323,7 +323,10 @@ describe("Client Endpoints", () => {
         _id: clientId,
         company: authUser.company,
       });
-      expect(client.updateOne).toHaveBeenCalledWith(updatePayload);
+      expect(client.updateOne).toHaveBeenCalledWith(updatePayload, {
+        new: true,
+        runValidators: true,
+      });
       expect(res.body).toEqual(updatePayload);
     });
 

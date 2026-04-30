@@ -170,7 +170,6 @@ describe("User Endpoints", () => {
           status: "pending",
           role: "admin",
           id: authUser._id,
-          verificationCode: expect.stringMatching(/^\d{6}$/),
         },
         accessToken: "access-token",
         refreshToken: "refresh-token",

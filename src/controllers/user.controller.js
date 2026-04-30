@@ -75,7 +75,6 @@ export async function registerUser(req, res, next) {
         status: user.status,
         role: user.role,
         id: user._id,
-        verificationCode: user.verificationCode
       },
       accessToken: accessToken,
       refreshToken: refreshToken,
@@ -294,7 +293,7 @@ export async function refreshUserSession(req, res, next) {
       throw AppError.unauthorized("Token no válido");
     }
 
-    refreshTokens(req, res);
+    await refreshTokens(req, res);
   } catch (error) {
 
     next(error);
@@ -402,20 +401,6 @@ export async function inviteUser(req, res, next) {
       message: "Usuario invitado con éxito",
       user: newUser,
     });
-  } catch (error) {
-
-    next(error);
-  }
-}
-
-export async function cleanDB(req, res, next) {
-  try {
-    await User.deleteMany({});
-    await Company.deleteMany({});
-    await Storage.deleteMany({});
-    await RefreshToken.deleteMany({});
-
-    res.status(200).json({ message: "Base de datos limpiada" });
   } catch (error) {
 
     next(error);

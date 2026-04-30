@@ -46,7 +46,7 @@ export async function getAllProjects(req, res, next) {
       .populate("client", "name")
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort(sort);
 
     const total = await Project.countDocuments(query);
     res.json({

@@ -41,7 +41,7 @@ export async function updateClient(req, res, next) {
     // recuperar el client y actualizar
     const client = await Client.findOne({_id : id, company : req.user.company});
     if(!client) throw AppError.notFound("Cliente no encontrado")
-    await client.updateOne(obj);
+    await client.updateOne(obj, {new: true, runValidators: true});
 
     res.status(200).json(obj);
   } catch (error) {
@@ -59,7 +59,7 @@ export async function getAllClients(req, res, next) {
       .populate("user", "name")
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort(sort);
 
     const total = await Client.countDocuments(query);
     res.json({
@@ -132,10 +132,10 @@ export async function restoreArchivedClientById(req, res, next) {
     const { id } = req.params;
 
     const isDeleted = await Client.findDeleted({_id: id, company: req.user.company})
-    if(!isDeleted)
+    if(isDeleted.length <= 0)
       throw AppError.notFound("No hay cliente archivado")
 
-    const client = Client.restoreById(id);
+    const client = await Client.restoreById(id);
     res.status(200).json({
       success : true
     });

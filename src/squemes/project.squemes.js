@@ -17,7 +17,7 @@ import {
 export const createProjectScheme = z.object({
   client: mongoIDSchema,
   name: namesSchema,
-  email: emailSchema.optional(),
+  email: emailSchema,
   address: addressSchema.optional(),
   notes: z.string().optional(),
   active: z.boolean().optional()

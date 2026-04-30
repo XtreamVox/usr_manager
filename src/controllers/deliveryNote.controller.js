@@ -42,7 +42,7 @@ export async function getAllDeliveryNotes(req, res, next) {
       .populate("Project", "description")
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort(sort);
 
     const total = await DeliveryNote.countDocuments(query);
     res.json({
@@ -110,7 +110,7 @@ export async function getPdfFromDeliveryNote(req, res, next) {
     );
 
     if (deliveryNote.signed) {
-      downloadPdf(deliveryNote.pdfUrl)
+      await downloadPdf(deliveryNote.pdfUrl)
       pdf = req.pdf;
     } else pdf = await generatePdfBuffer(deliveryNote);
 

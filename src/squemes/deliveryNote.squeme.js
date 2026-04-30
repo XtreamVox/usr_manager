@@ -28,7 +28,7 @@ const materialSchema = z
 
 const workersSchema = z.object({
   hours: z.number(),
-  workers: z.array(
+  data: z.array(
     z.object({
       name: z.string(),
       hours: z.number()

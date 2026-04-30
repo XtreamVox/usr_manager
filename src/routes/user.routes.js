@@ -17,7 +17,6 @@ import {
   registerUser,
   updateCompanyLogo,
   updateUserData,
-  cleanDB,
 } from "../controllers/user.controller.js";
 
 import {
@@ -99,7 +98,6 @@ router.post(
   validate({ body: inviteUserSchema }),
   inviteUser,
 );
-router.delete("/clean", cleanDB);
 
 
 
