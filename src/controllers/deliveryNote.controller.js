@@ -9,9 +9,13 @@ import { emitToCompany, SOCKET_EVENTS } from "../services/socket.service.js";
 
 export async function createDeliveryNote(req, res, next) {
   try {
-
-    const project = await Project.findOne({_id: req.body.project, client: req.body.client, company: req.user.company})
-    if (!project) throw AppError.notFound("No se encontró el proyecto asociado")
+    const project = await Project.findOne({
+      _id: req.body.project,
+      client: req.body.client,
+      company: req.user.company,
+    });
+    if (!project)
+      throw AppError.notFound("No se encontró el proyecto asociado");
 
     const note = await DeliveryNote.create({
       user: req.user._id,
@@ -31,15 +35,21 @@ export async function getAllDeliveryNotes(req, res, next) {
     const { limit, sort, page, filters, from, to } = req.query;
     const query = {
       ...filters,
-      workDate: { $gt: from, $lt: to },
       company: req.user.company,
     };
+
+    if (from || to) {
+      query.workDate = {};
+      if (from) query.workDate.$gte = from;
+      if (to) query.workDate.$lte = to;
+    }
+
     const skip = (page - 1) * limit;
     const deliveryNotes = await DeliveryNote.find(query)
-      .populate("Company", "description")
-      .populate("User", "description")
-      .populate("Client", "description")
-      .populate("Project", "description")
+      .populate("company", "description")
+      .populate("user", "description")
+      .populate("client", "description")
+      .populate("project", "description")
       .skip(skip)
       .limit(limit)
       .sort(sort);
@@ -65,7 +75,15 @@ export async function getDeliveryNote(req, res, next) {
   try {
     const { id } = req.params;
 
-    const deliveryNote = await DeliveryNote.findOne({_id : id, company : req.user.company});
+    const query = DeliveryNote.findOne({
+      _id: id,
+      company: req.user.company,
+    });
+    const deliveryNote =
+      typeof query.populate === "function"
+        ? await query.populate(["user", "project", "client"])
+        : await query;
+
     if (!deliveryNote) throw AppError.notFound("No se encontró el albaran");
 
     res.status(200).json(deliveryNote);
@@ -79,9 +97,13 @@ export async function deleteDeliveryNote(req, res, next) {
     const { soft } = req.query;
     const { id } = req.params;
 
-    const deliveryNote = await DeliveryNote.findOne({_id : id, company : req.user.company});
+    const deliveryNote = await DeliveryNote.findOne({
+      _id: id,
+      company: req.user.company,
+    });
     if (!deliveryNote) throw AppError.notFound("No se encontró el albaran");
-    if (deliveryNote.signed) throw AppError.forbidden("No se puede eliminar un albaran firmado");
+    if (deliveryNote.signed)
+      throw AppError.forbidden("No se puede eliminar un albaran firmado");
 
     if (soft) {
       await DeliveryNote.softDeleteById(id);
@@ -98,9 +120,17 @@ export async function deleteDeliveryNote(req, res, next) {
 export async function getPdfFromDeliveryNote(req, res, next) {
   try {
     const { id } = req.params;
-    const deliveryNote = await DeliveryNote.findOne({_id : id, company: req.user.company});
+    const query = DeliveryNote.findOne({
+      _id: id,
+      company: req.user.company,
+    });
+    const deliveryNote =
+      typeof query.populate === "function"
+        ? await query.populate(["client", "project"])
+        : await query;
+
     if (!deliveryNote) throw AppError.notFound("No se encontró el albaran");
-    
+
     let pdf;
 
     res.setHeader("Content-Type", "application/pdf");
@@ -110,8 +140,7 @@ export async function getPdfFromDeliveryNote(req, res, next) {
     );
 
     if (deliveryNote.signed) {
-      await downloadPdf(deliveryNote.pdfUrl)
-      pdf = req.pdf;
+      pdf = await downloadPdf(deliveryNote.pdfUrl);
     } else pdf = await generatePdfBuffer(deliveryNote);
 
     res.send(pdf);
@@ -126,7 +155,10 @@ export async function signPdf(req, res, next) {
     if (!req.file) throw AppError.badRequest("Archivo de firma requerido");
 
     const binarySignature = req.file.buffer;
-    const deliveryNote = await DeliveryNote.findOne({_id : id, company : req.user.company});
+    const deliveryNote = await DeliveryNote.findOne({
+      _id: id,
+      company: req.user.company,
+    });
     if (!deliveryNote) throw AppError.notFound("No se encontró el albaran");
 
     const firmaUrl = await cloudinaryService.uploadImage(binarySignature);
@@ -141,7 +173,11 @@ export async function signPdf(req, res, next) {
     deliveryNote.pdfUrl = pdfUrl.secure_url;
     await deliveryNote.save();
 
-    emitToCompany(deliveryNote.company, SOCKET_EVENTS.DELIVERYNOTE_SIGNED, deliveryNote);
+    emitToCompany(
+      deliveryNote.company,
+      SOCKET_EVENTS.DELIVERYNOTE_SIGNED,
+      deliveryNote,
+    );
     res.status(200).json(deliveryNote);
   } catch (error) {
     next(error);

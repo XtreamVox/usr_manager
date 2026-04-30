@@ -26,7 +26,6 @@ const projectSchema = new mongoose.Schema({
   }, // Nombre del proyecto
   projectCode: {
     type: String,
-    unique: true,
     sparse: true,
   }, // Código interno único (generado automáticamente)
   address: {
@@ -38,7 +37,6 @@ const projectSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    unique: true,
     required: true,
   }, // Email de contacto del proyecto
   notes: String, // Notas adicionales
@@ -68,6 +66,8 @@ async function generateProjectCode() {
 }
 // Middleware pre-save para generar automáticamente el projectCode
 projectSchema.pre("save", generateProjectCode);
+projectSchema.index({ company: 1, projectCode: 1 }, { unique: true, sparse: true });
+projectSchema.index({ company: 1, email: 1 }, { unique: true });
 projectSchema.plugin(softDeletePlugin);
 
 const Project = mongoose.model("Project", projectSchema);

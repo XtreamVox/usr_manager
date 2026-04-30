@@ -280,17 +280,15 @@ describe("Delivery Note Endpoints", () => {
 
       expect(res.status).toBe(200);
       expect(mockDeliveryNote.find).toHaveBeenCalledWith({
-        workDate: { $gt: undefined, $lt: undefined },
         company: authUser.company,
       });
       expect(mockDeliveryNote.countDocuments).toHaveBeenCalledWith({
-        workDate: { $gt: undefined, $lt: undefined },
         company: authUser.company,
       });
-      expect(chain.populate).toHaveBeenCalledWith("Company", "description");
-      expect(chain.populate).toHaveBeenCalledWith("User", "description");
-      expect(chain.populate).toHaveBeenCalledWith("Client", "description");
-      expect(chain.populate).toHaveBeenCalledWith("Project", "description");
+      expect(chain.populate).toHaveBeenCalledWith("company", "description");
+      expect(chain.populate).toHaveBeenCalledWith("user", "description");
+      expect(chain.populate).toHaveBeenCalledWith("client", "description");
+      expect(chain.populate).toHaveBeenCalledWith("project", "description");
       expect(chain.skip).toHaveBeenCalledWith(0);
       expect(chain.limit).toHaveBeenCalledWith(10);
       expect(chain.sort).toHaveBeenCalledWith({ createdAt: -1 });
@@ -328,16 +326,16 @@ describe("Delivery Note Endpoints", () => {
       expect(mockDeliveryNote.find).toHaveBeenCalledWith({
         format: "material",
         workDate: {
-          $gt: new Date("2026-01-01"),
-          $lt: new Date("2026-01-31"),
+          $gte: new Date("2026-01-01"),
+          $lte: new Date("2026-01-31"),
         },
         company: authUser.company,
       });
       expect(mockDeliveryNote.countDocuments).toHaveBeenCalledWith({
         format: "material",
         workDate: {
-          $gt: new Date("2026-01-01"),
-          $lt: new Date("2026-01-31"),
+          $gte: new Date("2026-01-01"),
+          $lte: new Date("2026-01-31"),
         },
         company: authUser.company,
       });

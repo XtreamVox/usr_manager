@@ -1,31 +1,27 @@
-import { application } from "express";
 import https from "https";
-import PDFDocument from "pdfkit"
-import cloudinaryService from '../services/cloudinary.service.js'
-import { buffer } from "stream/consumers"
-import { equal } from "assert"
-import { AppError } from "../utils/AppError.js"
-import { format } from "path"
-import { access } from "fs"
+import PDFDocument from "pdfkit";
+import { AppError } from "../utils/AppError.js";
 
-export async function returnPdf(req, res,next) {
+export async function returnPdf(req, res, next) {
+  try {
+    var doc = new PDFDocument();
 
-    try {
-        var doc = new PDFDocument()
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      'attachment; filename="albaransinfirma.pdf"',
+    );
 
-        res.setHeader('Content-Type','application/pdf')
-        res.setHeader('Content-Disposition', 'attachment; filename="albaransinfirma.pdf"')
+    doc.pipe(res);
 
-        doc.pipe(res)
+    doc.text("Aprendiendo a usar pdfkit u cloudinary", 100, 450);
+    doc.circle(280, 200, 50).fill("#6600FF");
+    doc.end();
 
-        doc.text('Aprendiendo a usar pdfkit u cloudinary',100,450)
-        doc.circle(280,200,50).fill("#6600FF")
-        doc.end()
-
-        res.status(200).json()
-    } catch (error) {
-        next(error)
-    }
+    res.status(200).json();
+  } catch (error) {
+    next(error);
+  }
 }
 
 export const generatePdfBuffer = async (deliveryNote) => {
@@ -34,10 +30,10 @@ export const generatePdfBuffer = async (deliveryNote) => {
     const buffers = [];
 
     // Callbacks
-    doc.on('data', (chunk) => buffers.push(chunk));
+    doc.on("data", (chunk) => buffers.push(chunk));
 
     doc.on("end", () => {
-        // pasar el array a binario
+      // pasar el array a binario
       const pdfData = Buffer.concat(buffers);
       resolve(pdfData);
     });
@@ -54,47 +50,64 @@ export const generatePdfBuffer = async (deliveryNote) => {
     doc.text(`Horas: ${deliveryNote.hours}`);
 
     if (deliveryNote.format === "hours") {
-        deliveryNote.workers?.data?.forEach((w) => {
-            doc.text(`Nombre: ${w.name} | Horas: ${w.hours}`);
-        });
-    };
+      deliveryNote.workers?.data?.forEach((w) => {
+        doc.text(`Nombre: ${w.name} | Horas: ${w.hours}`);
+      });
+    }
 
     if (deliveryNote.format === "material") {
       deliveryNote.material?.data?.forEach((m) => {
         doc.text(`Nombre: ${m.name} | Cantidad: ${m.quantity}`);
       });
 
-    if(deliveryNote.signed){
+      if (deliveryNote.signed) {
         // recoger imagen firma cloudinary
         doc.image(deliveryNote.signatureUrl);
+      }
     }
-}
 
     doc.end();
   });
 };
 
-export const downloadPdf = (url) => {
-  https.get(url, (response) => {
-      // Verificar que Cloudinary responda con éxito (status 200)
-      if (response.statusCode !== 200) {
-        throw AppError.badRequest(
-          "Cloudinary no responde o no encontro el archivo",
-        );
-      }
+export const downloadPdf = (url, redirects = 0) => {
+  if (!url) {
+    return Promise.reject(AppError.badRequest("URL del PDF requerida"));
+  }
 
-      const chunks = [];
+  return new Promise((resolve, reject) => {
+    https
+      .get(url, (response) => {
+        const { statusCode, headers } = response;
 
-      response.on("data", (chunk) => {
-        chunks.push(chunk);
+        if ([301, 302, 303, 307, 308].includes(statusCode) && headers.location) {
+          response.resume();
+
+          if (redirects >= 3) {
+            reject(AppError.badRequest("Demasiadas redirecciones al descargar el PDF"));
+            return;
+          }
+
+          resolve(downloadPdf(headers.location, redirects + 1));
+          return;
+        }
+
+        if (statusCode !== 200) {
+          response.resume();
+          reject(AppError.badRequest("Cloudinary no responde o no encontró el archivo"));
+          return;
+        }
+
+        const chunks = [];
+
+        response.on("data", (chunk) => chunks.push(chunk));
+        response.on("end", () => resolve(Buffer.concat(chunks)));
+        response.on("error", () => {
+          reject(AppError.internal("Fallo al descargar desde Cloudinary"));
+        });
+      })
+      .on("error", () => {
+        reject(AppError.internal("Fallo al descargar desde Cloudinary"));
       });
-
-      response.on("end", () => {
-        const fileBuffer = Buffer.concat(chunks);
-        req.pdf = fileBuffer;
-      });
-    })
-    .on("error", (error) => {
-      throw AppError.internal("Fallo al descargar desde cloudinary")
-    });
+  });
 };

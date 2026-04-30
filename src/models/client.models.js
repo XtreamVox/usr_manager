@@ -6,26 +6,22 @@ const clientSchema = new mongoose.Schema({
   user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      unique: true,
       required: true
   },       
   // ref: 'Company' — compañía a la que pertenece   
   company: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Company',
-    unique: true,
     required: true
   },       
   name: String,            // Nombre del cliente
   cif: {
     type: String,
-    required: true,
-    unique: true
+    required: true
   },             // CIF/NIF del cliente
   email: {
     type: String,
-    required: true,
-    unique: true
+    required: true
   },
   phone: String,
   address: {
@@ -37,8 +33,10 @@ const clientSchema = new mongoose.Schema({
   },
 }, { timestamps: true});
 
+clientSchema.index({ company: 1, cif: 1 }, { unique: true });
+clientSchema.index({ company: 1, email: 1 }, { unique: true });
+
 clientSchema.plugin(softDeletePlugin);
 
 const Client = mongoose.model('Client', clientSchema);
 export default Client;
-
