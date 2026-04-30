@@ -47,7 +47,7 @@ export const validateFile = (schema) => (req, res, next) => {
     const result = schema.safeParse(req.file);
 
     if (!result.success) {
-      throw AppError.badRequest(result.error.errors[0].message);
+      throw AppError.badRequest(result.error.issues[0].message);
     }
 
     next();

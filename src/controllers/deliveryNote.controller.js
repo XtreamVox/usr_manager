@@ -5,6 +5,7 @@ import { generatePdfBuffer, downloadPdf } from "../utils/handlePDF.js";
 import cloudinaryService from "../services/cloudinary.service.js";
 import Client from "../models/client.models.js";
 import Project from "../models/project.models.js";
+import { emitToCompany, SOCKET_EVENTS } from "../services/socket.service.js";
 
 export async function createDeliveryNote(req, res, next) {
   try {
@@ -18,6 +19,7 @@ export async function createDeliveryNote(req, res, next) {
       ...req.body,
     });
 
+    emitToCompany(note.company, SOCKET_EVENTS.DELIVERYNOTE_NEW, note);
     res.status(201).json(note);
   } catch (error) {
     next(error);
@@ -139,6 +141,7 @@ export async function signPdf(req, res, next) {
     deliveryNote.pdfUrl = pdfUrl.secure_url;
     await deliveryNote.save();
 
+    emitToCompany(deliveryNote.company, SOCKET_EVENTS.DELIVERYNOTE_SIGNED, deliveryNote);
     res.status(200).json(deliveryNote);
   } catch (error) {
     next(error);

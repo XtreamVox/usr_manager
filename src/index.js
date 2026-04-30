@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import app from './app.js';
 import env from './config/env.js';
 import dbConnect from './config/db.js';
+import { configureSocketIo } from './services/socket.service.js';
 
 const server = createServer(app);
 const io = new Server(server, {
@@ -11,6 +12,8 @@ const io = new Server(server, {
         origin: '*'
     }
 });
+configureSocketIo(io);
+app.set('io', io);
 
 await dbConnect();
 

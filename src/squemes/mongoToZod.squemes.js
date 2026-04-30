@@ -97,7 +97,12 @@ export const buildPaginationAndFilterScheme = (schemaMap) =>
           const result = listPaginationScheme.shape[key].safeParse(value);
 
           if (!result.success) {
-            result.error.issues.forEach(issue => ctx.addIssue(issue));
+            result.error.issues.forEach(issue =>
+              ctx.addIssue({
+                ...issue,
+                path: [key],
+              })
+            );
             continue;
           }
 

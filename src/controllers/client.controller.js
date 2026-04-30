@@ -3,6 +3,7 @@ import { AppError } from "../utils/AppError.js";
 import User from "../models/user.models.js";
 import Company from "../models/company.models.js";
 import { success } from "zod";
+import { emitToCompany, SOCKET_EVENTS } from "../services/socket.service.js";
 
 export async function createClient(req, res, next) {
   try {
@@ -23,6 +24,8 @@ export async function createClient(req, res, next) {
       phone: phone,
       address: address,
     });
+
+    emitToCompany(client.company, SOCKET_EVENTS.CLIENT_NEW, client);
     res.status(201).json(client);
   } catch (error) {
     next(error);

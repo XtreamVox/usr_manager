@@ -2,6 +2,7 @@ import Client from "../models/client.models.js";
 import Project from "../models/project.models.js";
 import User from "../models/user.models.js";
 import { AppError } from "../utils/AppError.js";
+import { emitToCompany, SOCKET_EVENTS } from "../services/socket.service.js";
 
 export async function createProject(req, res, next) {
   try {
@@ -14,6 +15,7 @@ export async function createProject(req, res, next) {
       ...req.body
     });
 
+    emitToCompany(project.company, SOCKET_EVENTS.PROJECT_NEW, project);
     res.status(201).json(project);
   } catch (error) {
     next(error);
