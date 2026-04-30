@@ -20,6 +20,7 @@ jest.unstable_mockModule("../../config/cloudinary.js", () => ({
 }));
 
 const { default: cloudinaryService } = await import("../../services/cloudinary.service.js");
+const { uploadAvatar } = await import("../../controllers/cloudinary.controller.js");
 
 describe("CloudinaryService", () => {
   beforeEach(() => {
@@ -93,6 +94,19 @@ describe("CloudinaryService", () => {
       }),
       expect.any(Function),
     );
+  });
+
+  it("delegates avatar controller calls to the Cloudinary service", async () => {
+    const result = await uploadAvatar(Buffer.from("avatar"), "42");
+
+    expect(result).toEqual({
+      public_id: "file-id",
+      options: expect.objectContaining({
+        folder: "avatars",
+        public_id: "user_42",
+        overwrite: true,
+      }),
+    });
   });
 
   it("deletes files and builds cloudinary URLs", async () => {

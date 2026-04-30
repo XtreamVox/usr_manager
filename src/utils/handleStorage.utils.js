@@ -1,22 +1,7 @@
 // src/utils/handleStorage.js
+import crypto from "node:crypto";
 import multer from "multer";
-import { extname, join } from "node:path";
-
-// Node.js 20.11+ - forma moderna
-const __dirname = import.meta.dirname;
-
-// Configuración de almacenamiento
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = join(__dirname, "../../uploads");
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const ext = extname(file.originalname).toLowerCase();
-    cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
-  },
-});
+import { extname } from "node:path";
 
 // Filtro de tipos de archivo
 const fileFilter = (req, file, cb) => {
@@ -55,7 +40,7 @@ const diskStorage = multer.diskStorage({
   filename: (req, file, cb) => {
     // Generar nombre único
     const uniqueSuffix = crypto.randomBytes(16).toString("hex");
-    const ext = path.extname(file.originalname);
+    const ext = extname(file.originalname).toLowerCase();
     cb(null, `${uniqueSuffix}${ext}`);
   },
 });
