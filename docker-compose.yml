@@ -3,12 +3,16 @@ version: '3.8'
 
 services:
   api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=development
-      - DATABASE_URL=mongodb://mongo:27017/myapp
+      - PORT=3000
+      - DB_URI=mongodb://mongo:27017/usr_manager
+      - DATABASE_URL=mongodb://mongo:27017/usr_manager
       - JWT_SECRET=dev-secret-32-characters-long!!
     depends_on:
       - mongo

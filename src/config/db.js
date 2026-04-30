@@ -18,11 +18,4 @@ mongoose.connection.on('disconnected', () => {
     console.warn('Desconectado de MongoDB');
 });
 
-// Cerrar conexión al terminar la app
-process.on('SIGINT', async () => {
-    await mongoose.connection.close();
-    console.log('Conexión a MongoDB cerrada');
-    process.exit(0);
-});
-
 export default dbConnect;

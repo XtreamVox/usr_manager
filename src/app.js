@@ -1,5 +1,6 @@
 import express from 'express';
 import helmet from 'helmet';
+import mongoose from 'mongoose';
 import swaggerUi from 'swagger-ui-express';
 import { sanitizeBody } from './middleware/sanitize.middleware.js';
 import limiter from './middleware/rateLimit.middleware.js';
@@ -25,6 +26,15 @@ morganBody(app, {
   stream: loggerStream
 });
 app.use(helmet());
+
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString()
+  });
+});
 
 app.use(sanitizeBody);
 
