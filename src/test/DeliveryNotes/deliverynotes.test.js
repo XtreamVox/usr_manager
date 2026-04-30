@@ -140,6 +140,13 @@ const mockFindChain = (data) => {
   return chain;
 };
 
+const mockFindOnePopulateChain = (data) => {
+  const chain = {
+    populate: jest.fn().mockResolvedValue(data),
+  };
+  return chain;
+};
+
 describe("Delivery Note Endpoints", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -415,13 +422,14 @@ describe("Delivery Note Endpoints", () => {
         signed: false,
         save: jest.fn().mockResolvedValue(undefined),
       };
-      mockDeliveryNote.findOne.mockResolvedValue(note);
       mockCloudinaryService.uploadImage.mockResolvedValue({
         secure_url: "https://cdn.example/signature.png",
       });
       mockCloudinaryService.uploadPdf.mockResolvedValue({
         secure_url: "https://cdn.example/delivery-note.pdf",
       });
+      const findOneChain = mockFindOnePopulateChain(note);
+      mockDeliveryNote.findOne.mockReturnValue(findOneChain);
 
       const res = await request(app)
         .patch(`/api/deliverynote/${deliveryNoteId}/sign`)
@@ -432,6 +440,7 @@ describe("Delivery Note Endpoints", () => {
         });
 
       expect(res.status).toBe(200);
+      expect(findOneChain.populate).toHaveBeenCalledWith(["client", "project"]);
       expect(mockCloudinaryService.uploadImage).toHaveBeenCalledWith(
         Buffer.from("signature-buffer"),
       );
@@ -466,11 +475,12 @@ describe("Delivery Note Endpoints", () => {
     });
 
     it("rejects signing an already signed delivery note", async () => {
-      mockDeliveryNote.findOne.mockResolvedValue({
+      const findOneChain = mockFindOnePopulateChain({
         _id: deliveryNoteId,
         company: authUser.company,
         signed: true,
       });
+      mockDeliveryNote.findOne.mockReturnValue(findOneChain);
 
       const res = await request(app)
         .patch(`/api/deliverynote/${deliveryNoteId}/sign`)
@@ -481,6 +491,7 @@ describe("Delivery Note Endpoints", () => {
         });
 
       expect(res.status).toBe(403);
+      expect(findOneChain.populate).toHaveBeenCalledWith(["client", "project"]);
       expect(res.body.message).toBe("No se puede volver a firmar un albaran firmado");
       expect(mockCloudinaryService.uploadImage).not.toHaveBeenCalled();
       expect(mockCloudinaryService.uploadPdf).not.toHaveBeenCalled();
