@@ -38,6 +38,9 @@ jobs:
           JWT_SECRET=test-secret-32-characters-long!!
           EOF
 
+      - name: Prepare upload directory
+        run: mkdir -p uploads
+
       - name: Run linter
         run: npm run lint --if-present
 
