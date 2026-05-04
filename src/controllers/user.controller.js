@@ -15,388 +15,334 @@ import { sendVerificationEmail } from "../utils/sendEmails.js";
 import cloudinaryService from "../services/cloudinary.service.js";
 
 export async function getUser(req, res, next) {
-  try {
-    const user_id = req.user._id;
+  const user_id = req.user._id;
 
-    const user = await User.findById(user_id).populate("company", "name");
+  const user = await User.findById(user_id).populate("company", "name");
 
-    if (!user) {
-      throw AppError.notFound("Usuario");
-    }
-
-    res.status(200).json(user);
-  } catch (error) {
-    next(error);
+  if (!user) {
+    throw AppError.notFound("Usuario");
   }
+
+  res.status(200).json(user);
 }
 
-
 export async function registerUser(req, res, next) {
-  try {
-    const { password } = req.body;
+  const { password } = req.body;
 
-    req.body.password = await encrypt(password);
+  req.body.password = await encrypt(password);
 
-    const user = await User.create(req.body);
-    user.createdAt = new Date();
+  const user = await User.create(req.body);
+  user.createdAt = new Date();
 
+  const randomCode = Math.floor(100000 + Math.random() * 900000).toString();
+  const accessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken();
 
-    const randomCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken();
+  user.verificationCode = randomCode;
+  user.status = "pending";
 
-    user.verificationCode = randomCode;
-    user.status = "pending";
+  await user.save();
 
-    await user.save();
+  //await sendVerificationEmail(user.email, randomCode, user.name);
 
-    //await sendVerificationEmail(user.email, randomCode, user.name);
+  eventEmitter.emit(EVENTS.USER_REGISTERED, {
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    status: user.status,
+    timestamp: new Date().toISOString(),
+  });
 
-    eventEmitter.emit(EVENTS.USER_REGISTERED, {
+  await RefreshToken.create({
+    token: refreshToken,
+    user: user._id,
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    createdByIp: req.ip,
+  });
+
+  const answer = {
+    userData: {
       email: user.email,
-      name: user.name,
-      role: user.role,
       status: user.status,
-      timestamp: new Date().toISOString(),
-    });
-
-    await RefreshToken.create({
-      token: refreshToken,
-      user: user._id,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      createdByIp: req.ip,
-    });
-
-    const answer = {
-      userData: {
-        email: user.email,
-        status: user.status,
-        role: user.role,
-        id: user._id,
-      },
-      accessToken: accessToken,
-      refreshToken: refreshToken,
-    };
-    await sendSlackNotification(`📢 Nuevo usuario registrado: ${user.email} (${user.role})`);
-    res.status(200).json(answer);
-  } catch (error) {
-    next(error);
-  }
+      role: user.role,
+      id: user._id,
+    },
+    accessToken: accessToken,
+    refreshToken: refreshToken,
+  };
+  await sendSlackNotification(
+    `📢 Nuevo usuario registrado: ${user.email} (${user.role})`,
+  );
+  res.status(200).json(answer);
 }
 
 export async function doubleStepVerification(req, res, next) {
-  try {
-    const user_id = req.user._id;
-    const user = await User.findById(user_id);
+  const user_id = req.user._id;
+  const user = await User.findById(user_id);
 
-    if (!user) {
-      throw AppError.notFound("Usuario");
-    }
-    if (user.verificationAttempts <= 0) {
-      await user.deleteOne();
-      throw AppError.tooManyRequests("Demasiados intentos de verificación");
-    }
-
-    if (req.body.code == user.verificationCode) {
-      const updatedUser = await User.findByIdAndUpdate(user_id, { status: "verified" }, { new: true});
-
-      eventEmitter.emit(EVENTS.USER_VERIFIED, {
-        email: updatedUser.email,
-        verifiedAt: updatedUser.updatedAt?.toISOString() || new Date().toISOString(),
-        timestamp: new Date().toISOString(),
-      });
-
-      return res.status(200).json({ message: "Usuario verificado", user: updatedUser });
-    }
-
-    user.verificationAttempts -= 1;
-    await user.save();
-
-    throw AppError.badRequest("Código de verificación incorrecto");
-  } catch (error) {
-
-    next(error);
+  if (!user) {
+    throw AppError.notFound("Usuario");
   }
-}
-
-export async function loginUser(req, res, next) {
-  try {
-    const { email, password } = req.body;
-
-    const user = await User.findOne({ email: email }).select("+password");
-
-    if (!user) {
-      throw AppError.badRequest("Email o contraseña incorrectos");
-    }
-
-    if (user.status === "pending"){
-      throw AppError.unauthorized("Usuario pendiente de verificación");
-    }
-
-    const checkPass = await compare(password, user.password);
-
-    if (!checkPass) {
-      throw AppError.badRequest("Email o contraseña incorrectos");
-    }
-    
-
-
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken();
-
-    await RefreshToken.create({
-      token: refreshToken,
-      user: user._id,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      createdByIp: req.ip,
-    });
-
-    const answer = {
-      userData: {
-        email: user.email,
-        status: user.status,
-        role: user.role,
-      },
-      accessToken: accessToken,
-      refreshToken: refreshToken,
-    };
-    res.status(200).json(answer);
-  } catch (error) {
-
-    next(error);
+  if (user.verificationAttempts <= 0) {
+    await user.deleteOne();
+    throw AppError.tooManyRequests("Demasiados intentos de verificación");
   }
-}
 
-export async function updateUserData(req, res, next) {
-  try {
-    const { _id } = req.user;
-    const { name, lastName, nif } = req.body;
-
-    const user = await User.findByIdAndUpdate(
-      _id,
-      {
-        name: name,
-        lastName: lastName,
-        nif: nif,
-      },
+  if (req.body.code == user.verificationCode) {
+    const updatedUser = await User.findByIdAndUpdate(
+      user_id,
+      { status: "verified" },
       { new: true },
     );
 
-    if (!user) {
-      throw AppError.notFound("Usuario");
-    }
+    eventEmitter.emit(EVENTS.USER_VERIFIED, {
+      email: updatedUser.email,
+      verifiedAt:
+        updatedUser.updatedAt?.toISOString() || new Date().toISOString(),
+      timestamp: new Date().toISOString(),
+    });
 
-    res.status(200).json(user);
-  } catch (error) {
-    next(error);
+    return res
+      .status(200)
+      .json({ message: "Usuario verificado", user: updatedUser });
   }
+
+  user.verificationAttempts -= 1;
+  await user.save();
+
+  throw AppError.badRequest("Código de verificación incorrecto");
+}
+
+export async function loginUser(req, res, next) {
+  const { email, password } = req.body;
+
+  const user = await User.findOne({ email: email }).select("+password");
+
+  if (!user) {
+    throw AppError.badRequest("Email o contraseña incorrectos");
+  }
+
+  if (user.status === "pending") {
+    throw AppError.unauthorized("Usuario pendiente de verificación");
+  }
+
+  const checkPass = await compare(password, user.password);
+
+  if (!checkPass) {
+    throw AppError.badRequest("Email o contraseña incorrectos");
+  }
+
+  const accessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken();
+
+  await RefreshToken.create({
+    token: refreshToken,
+    user: user._id,
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    createdByIp: req.ip,
+  });
+
+  const answer = {
+    userData: {
+      email: user.email,
+      status: user.status,
+      role: user.role,
+    },
+    accessToken: accessToken,
+    refreshToken: refreshToken,
+  };
+  res.status(200).json(answer);
+}
+
+export async function updateUserData(req, res, next) {
+  const { _id } = req.user;
+  const { name, lastName, nif } = req.body;
+
+  const user = await User.findByIdAndUpdate(
+    _id,
+    {
+      name: name,
+      lastName: lastName,
+      nif: nif,
+    },
+    { new: true },
+  );
+
+  if (!user) {
+    throw AppError.notFound("Usuario");
+  }
+
+  res.status(200).json(user);
 }
 
 export async function updateCompanyData(req, res, next) {
-  try {
-    const { _id } = req.user;
+  const { _id } = req.user;
 
-    const { name, cif, address, isFreelance } = req.body;
-    const user = await User.findById(_id);
+  const { name, cif, address, isFreelance } = req.body;
+  const user = await User.findById(_id);
 
-    if (!user) {
-      throw AppError.notFound("Usuario");
-    }
+  if (!user) {
+    throw AppError.notFound("Usuario");
+  }
 
-    if (isFreelance) {
-      const company = await Company.create({
-        owner: user._id,
-        name: user.name,
-        cif: user.nif,
-        address: user.address,
-        isFreelance: isFreelance,
-      });
-      user.company = company._id;
-      await user.save();
+  if (isFreelance) {
+    const company = await Company.create({
+      owner: user._id,
+      name: user.name,
+      cif: user.nif,
+      address: user.address,
+      isFreelance: isFreelance,
+    });
+    user.company = company._id;
+    await user.save();
 
-      return res.status(200).json(company);
-    }
+    return res.status(200).json(company);
+  }
 
-    const company = await Company.findOne({ cif: cif });
+  const company = await Company.findOne({ cif: cif });
 
-    if (!company) {
-      const new_company = await Company.create({
-        owner: _id,
-        name: name,
-        cif: cif,
-        address: address,
-        isFreelance: isFreelance,
-      });
-      user.company = new_company._id;
-      await user.save();
+  if (!company) {
+    const new_company = await Company.create({
+      owner: _id,
+      name: name,
+      cif: cif,
+      address: address,
+      isFreelance: isFreelance,
+    });
+    user.company = new_company._id;
+    await user.save();
 
-      return res.status(200).json(new_company);
-    } else {
-      const updatedUser = await User.findByIdAndUpdate(_id, {
-        company: company,
-        role: "guest",
-      });
-      return res.status(200).json(updatedUser);
-    }
-  } catch (error) {
-
-    next(error);
+    return res.status(200).json(new_company);
+  } else {
+    const updatedUser = await User.findByIdAndUpdate(_id, {
+      company: company,
+      role: "guest",
+    });
+    return res.status(200).json(updatedUser);
   }
 }
 
-
 export async function updateCompanyLogo(req, res, next) {
-  try {
-    if (!req.file) {
-      throw AppError.badRequest("No se subió ningún archivo");
-    }
-
-    const result = await cloudinaryService.uploadAvatar(
-      req.file.buffer,
-      req.user._id
-    );
-    const company = await Company.findByIdAndUpdate(
-      req.user.company,
-      { logo: result.secure_url },
-      { new: true }
-    );
-
-    if (!company) {
-      throw AppError.notFound("Compañía");
-    }
-
-    res.status(201).json({
-      data: {
-        company,
-        logo: result.secure_url,
-      },
-    });
-  } catch (error) {
-
-    next(error);
+  if (!req.file) {
+    throw AppError.badRequest("No se subió ningún archivo");
   }
+
+  const result = await cloudinaryService.uploadAvatar(
+    req.file.buffer,
+    req.user._id,
+  );
+  const company = await Company.findByIdAndUpdate(
+    req.user.company,
+    { logo: result.secure_url },
+    { new: true },
+  );
+
+  if (!company) {
+    throw AppError.notFound("Compañía");
+  }
+
+  res.status(201).json({
+    data: {
+      company,
+      logo: result.secure_url,
+    },
+  });
 }
 
 export async function refreshUserSession(req, res, next) {
-  try {
-    const { refreshToken } = req.body;
+  const { refreshToken } = req.body;
 
-    const storedToken = await RefreshToken.findOne({ token: refreshToken });
+  const storedToken = await RefreshToken.findOne({ token: refreshToken });
 
-    if (!storedToken || !storedToken.isActive()) {
-      throw AppError.unauthorized("Token no válido");
-    }
-
-    await refreshTokens(req, res);
-  } catch (error) {
-
-    next(error);
+  if (!storedToken || !storedToken.isActive()) {
+    throw AppError.unauthorized("Token no válido");
   }
+
+  await refreshTokens(req, res);
 }
 
 export async function logOutUser(req, res, next) {
-  try {
-    await RefreshToken.updateMany(
-      { user: req.user._id, revokedAt: null },
-      { revokedAt: new Date(), revokedByIp: req.ip },
-    );
+  await RefreshToken.updateMany(
+    { user: req.user._id, revokedAt: null },
+    { revokedAt: new Date(), revokedByIp: req.ip },
+  );
 
-    res.json({ message: "Todas las sesiones cerradas" });
-  } catch (error) {
-
-    next(error);
-  }
+  res.json({ message: "Todas las sesiones cerradas" });
 }
 
 export async function deleteUser(req, res, next) {
-  try {
-    const { _id } = req.user;
-    const { soft } = req.query;
+  const { _id } = req.user;
+  const { soft } = req.query;
 
-    const user = await User.findById(_id);
-    const userEmail = user?.email;
+  const user = await User.findById(_id);
+  const userEmail = user?.email;
 
-    const deleteType = soft ? "soft" : "hard";
+  const deleteType = soft ? "soft" : "hard";
 
-    if (soft) {
-      await User.softDeleteById(_id);
-    } else {
-      await User.hardDelete(_id);
-    }
-
-    eventEmitter.emit(EVENTS.USER_DELETED, {
-      email: userEmail,
-      deletedAt: new Date().toISOString(),
-      deleteType: deleteType,
-      timestamp: new Date().toISOString(),
-    });
-
-    res.status(200).json({ message: `Usuario eliminado (${deleteType} delete)` });
-  } catch (error) {
-
-    next(error);
+  if (soft) {
+    await User.softDeleteById(_id);
+  } else {
+    await User.hardDelete(_id);
   }
+
+  eventEmitter.emit(EVENTS.USER_DELETED, {
+    email: userEmail,
+    deletedAt: new Date().toISOString(),
+    deleteType: deleteType,
+    timestamp: new Date().toISOString(),
+  });
+
+  res.status(200).json({ message: `Usuario eliminado (${deleteType} delete)` });
 }
 
 export async function changePassword(req, res, next) {
-  try {
-    const { _id } = req.user;
-    const { currentPassword, newPassword } = req.body;
+  const { _id } = req.user;
+  const { currentPassword, newPassword } = req.body;
 
-    const user = await User.findById(_id).select("+password");
+  const user = await User.findById(_id).select("+password");
 
-    if (!user) {
-      throw AppError.notFound("Usuario");
-    }
-
-    const checkPass = await compare(currentPassword, user.password);
-
-
-    if (!checkPass) {
-      throw AppError.badRequest("Contraseña actual incorrecta");
-    }
-
-    const HashedNewPassword = await encrypt(newPassword);
-    await User.findByIdAndUpdate(_id, { password: HashedNewPassword });
-
-    res.status(200).json({ message: "Contraseña actualizada" });
-  } catch (error) {
-
-    next(error);
+  if (!user) {
+    throw AppError.notFound("Usuario");
   }
+
+  const checkPass = await compare(currentPassword, user.password);
+
+  if (!checkPass) {
+    throw AppError.badRequest("Contraseña actual incorrecta");
+  }
+
+  const HashedNewPassword = await encrypt(newPassword);
+  await User.findByIdAndUpdate(_id, { password: HashedNewPassword });
+
+  res.status(200).json({ message: "Contraseña actualizada" });
 }
 
 export async function inviteUser(req, res, next) {
-  try {
-    if (req.user.role !== "admin") {
-      throw AppError.forbidden("Acceso denegado. Solo administradores.");
-    }
-
-    const { email, name, lastName, password } = req.body;
-
-    const newUser = await User.create({
-      name,
-      password: await encrypt(password.toString()),
-      lastName,
-      email,
-      company: req.user.company,
-      role: "guest",
-      status: "pending",
-    });
-
-    eventEmitter.emit(EVENTS.USER_INVITED, {
-      email: newUser.email,
-      invitedBy: req.user.email,
-      invitedAt: newUser.createdAt.toISOString(),
-      timestamp: new Date().toISOString(),
-    });
-
-    res.status(201).json({
-      message: "Usuario invitado con éxito",
-      user: newUser,
-    });
-  } catch (error) {
-
-    next(error);
+  if (req.user.role !== "admin") {
+    throw AppError.forbidden("Acceso denegado. Solo administradores.");
   }
+
+  const { email, name, lastName, password } = req.body;
+
+  const newUser = await User.create({
+    name,
+    password: await encrypt(password.toString()),
+    lastName,
+    email,
+    company: req.user.company,
+    role: "guest",
+    status: "pending",
+  });
+
+  eventEmitter.emit(EVENTS.USER_INVITED, {
+    email: newUser.email,
+    invitedBy: req.user.email,
+    invitedAt: newUser.createdAt.toISOString(),
+    timestamp: new Date().toISOString(),
+  });
+
+  res.status(201).json({
+    message: "Usuario invitado con éxito",
+    user: newUser,
+  });
 }
