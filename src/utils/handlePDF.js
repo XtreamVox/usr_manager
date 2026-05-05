@@ -64,12 +64,21 @@ export const generatePdfBuffer = async (deliveryNote) => {
         doc.text(`Nombre: ${m.name} | Horas: ${m.hours}`);
       });
     }
-    if (deliveryNote.signed) {
-      // recoger imagen firma cloudinary
-      doc.image(deliveryNote.signatureUrl);
+    
+    // Descargar imagen de firma si existe
+    if (deliveryNote.signed && deliveryNote.signatureUrl) {
+      downloadPdf(deliveryNote.signatureUrl)
+        .then((imageBuffer) => {
+          doc.image(imageBuffer);
+          doc.end();
+        })
+        .catch(() => {
+          // Si falla la descarga, terminar sin imagen
+          doc.end();
+        });
+    } else {
+      doc.end();
     }
-
-    doc.end();
   });
 };
 
