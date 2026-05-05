@@ -41,6 +41,20 @@
         },
         {
           "name": "refreshToken",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.environment.set(\"token_admin\", pm.response.json().accessToken);\r",
+                  "pm.environment.set(\"refresh_admin\", pm.response.json().refreshToken);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [],
@@ -130,7 +144,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"email\": \"admin@test.com\",\r\n    \"password\": \"12345678\"\r\n}",
+              "raw": "{\r\n    \"email\": \"admin@test.com\",\r\n    \"password\": \"Aa12345678\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -173,7 +187,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"email\": \"nuevo2@empresa.com\"\r\n}",
+              "raw": "{\r\n  \"email\": \"nuevo4@empresa.com\",\r\n  \"name\": \"Federico\",\r\n  \"password\": \"1234567AAaa\",\r\n  \"lastName\": \"Vega\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -196,6 +210,19 @@
         },
         {
           "name": "validateUser",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
           "request": {
             "auth": {
               "type": "bearer",
@@ -211,7 +238,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"code\": \"123456\"\r\n}",
+              "raw": "{\r\n    \"code\": \"{{verification_code}}\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -376,7 +403,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"email\": \"freelance@test.com\",\r\n  \"password\": \"12345678\"\r\n}",
+              "raw": "{\r\n  \"email\": \"freelance@test.com\",\r\n  \"password\": \"Aa12345678\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -427,7 +454,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"email\": \"guest@test.com\",\r\n  \"password\": \"12345678\"\r\n}",
+              "raw": "{\r\n  \"email\": \"guest@test.com\",\r\n  \"password\": \"Aa12345678\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -455,7 +482,13 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.environment.set(\"token_admin\", pm.response.json().accessToken);"
+                  "pm.environment.set(\"token_admin\", pm.response.json().accessToken);\r",
+                  "\r",
+                  "pm.environment.set(\"admin_ID\", pm.response.json().userData.id);\r",
+                  "\r",
+                  "pm.environment.set(\"refresh_admin\", pm.response.json().refreshToken)\r",
+                  "\r",
+                  "pm.environment.set(\"verification_code\", pm.response.json().userData.verificationCode)"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -648,7 +681,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"name\": \"Empresa SL\",\r\n  \"cif\": \"B12345678\",\r\n  \"address\": \"Calle Falsa 123\",\r\n  \"isFreelance\": false\r\n}",
+              "raw": "{\r\n  \"name\": \"Empresa SL\",\r\n  \"cif\": \"B12345678\",\r\n    \"address\": {\r\n        \"street\": \"Av. Siempre Viva\",\r\n        \"number\": \"742\",\r\n        \"postal\": \"14065\",\r\n        \"city\": \"Buenos Aires\",\r\n        \"province\": \"Buenos Aires\"\r\n    },\r\n  \"isFreelance\": false\r\n}",
               "options": {
                 "raw": {
                   "language": "json"

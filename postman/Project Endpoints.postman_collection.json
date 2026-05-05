@@ -1,0 +1,321 @@
+{
+  "info": {
+    "_postman_id": "6a5f0cf9-fc17-4b67-8f96-69e65ffdafa3",
+    "name": "Project Endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "53753208",
+    "_collection_link": "https://go.postman.co/collection/53753208-6a5f0cf9-fc17-4b67-8f96-69e65ffdafa3?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Create Project",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "let responseJson;\r",
+              "try {\r",
+              "    responseJson = pm.response.json();\r",
+              "} catch (e) {\r",
+              "    console.warn('Response is not valid JSON.');\r",
+              "}\r",
+              "\r",
+              "if (responseJson && responseJson._id) {\r",
+              "    pm.environment.set('project_ID', responseJson._id);\r",
+              "} else {\r",
+              "    console.warn(\"Response JSON does not contain '_id'.\");\r",
+              "}"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_admin}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"Proyecto Demo\",\r\n  \"client\": \"{{client_ID}}\",\r\n  \"email\": \"contacto@empresa.com\",\r\n  \"notes\": \"Proyecto creado desde Postman para pruebas\",\r\n  \"active\": true,\r\n  \"address\": {\r\n    \"street\": \"Calle Mayor\",\r\n    \"number\": \"123\",\r\n    \"postal\": \"28001\",\r\n    \"city\": \"Madrid\",\r\n    \"province\": \"Madrid\"\r\n  }\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/project",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "project"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update Project",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_admin}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"name\" : \"Proyecto\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/project/{{project_ID}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "project",
+            "{{project_ID}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List All Project",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_admin}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/project?page=1&limit=10&sort=-name&address.city=Madrid",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "project"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            },
+            {
+              "key": "sort",
+              "value": "-name"
+            },
+            {
+              "key": "address.city",
+              "value": "Madrid"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List Project",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_admin}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"user\" : {{admin_ID}}\r\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/project/{{project_ID}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "project",
+            "{{project_ID}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Soft Delete Project",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_admin}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/project/{{project_ID}}?soft=true",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "project",
+            "{{project_ID}}"
+          ],
+          "query": [
+            {
+              "key": "soft",
+              "value": "true"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Hard Delete Project",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_admin}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/project/{{project_ID}}?soft=false",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "project",
+            "{{project_ID}}"
+          ],
+          "query": [
+            {
+              "key": "soft",
+              "value": "false"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Archived Projects",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_admin}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/project/archived",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "project",
+            "archived"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Restore Archived Project",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_admin}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/project/{{project_ID}}/restore",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "project",
+            "{{project_ID}}",
+            "restore"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
