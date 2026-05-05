@@ -1,0 +1,292 @@
+{
+  "info": {
+    "_postman_id": "a15d0c27-8c11-4639-b43c-a66abb27ba21",
+    "name": "DeliveryNote Endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "53753208",
+    "_collection_link": "https://go.postman.co/collection/53753208-a15d0c27-8c11-4639-b43c-a66abb27ba21?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Create DeliveryNote",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "let responseJson;\r",
+              "try {\r",
+              "    responseJson = pm.response.json();\r",
+              "} catch (e) {\r",
+              "    console.warn('Response is not valid JSON.');\r",
+              "}\r",
+              "\r",
+              "if (responseJson && responseJson._id) {\r",
+              "    pm.environment.set('deliveryNote_ID', responseJson._id);\r",
+              "} else {\r",
+              "    console.warn(\"Response JSON does not contain '_id'.\");\r",
+              "}\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_admin}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"client\": \"{{client_ID}}\",\r\n  \"project\": \"{{project_ID}}\",\r\n  \"description\": \"Material entregado para obra\",\r\n  \"workDate\": \"2026-04-26\",\r\n  \"format\": \"material\",\r\n  \"material\": {\r\n    \"unit\": \"kg\",\r\n    \"data\": [\r\n        {\r\n        \"name\": \"Cemento\",\r\n        \"quantity\": 25\r\n        }\r\n    ]\r\n  }\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/deliverynote",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "deliverynote"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List All DeliveryNotes",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_admin}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/deliverynote?page=1&limit=10&sort=-createdAt&format=material",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "deliverynote"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            },
+            {
+              "key": "sort",
+              "value": "-createdAt"
+            },
+            {
+              "key": "format",
+              "value": "material"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List DeliveryNote",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_admin}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/deliverynote/{{deliveryNote_ID}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "deliverynote",
+            "{{deliveryNote_ID}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Download DeliveryNote",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_admin}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/deliverynote/pdf/{{deliveryNote_ID}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "deliverynote",
+            "pdf",
+            "{{deliveryNote_ID}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Sign DeliveryNote",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_admin}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/deliverynote/{{deliveryNote_ID}}/sign",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "deliverynote",
+            "{{deliveryNote_ID}}",
+            "sign"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Hard Delete DeliveryNote",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_admin}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/deliverynote/{{deliveryNote_ID}}?soft=false",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "deliverynote",
+            "{{deliveryNote_ID}}"
+          ],
+          "query": [
+            {
+              "key": "soft",
+              "value": "false"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Soft Delete DeliveryNote",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token_admin}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/deliverynote/{{deliveryNote_ID}}?soft=true",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "deliverynote",
+            "{{deliveryNote_ID}}"
+          ],
+          "query": [
+            {
+              "key": "soft",
+              "value": "true"
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

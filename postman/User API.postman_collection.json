@@ -522,7 +522,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"email\": \"admin@test.com\",\r\n  \"password\": \"Aa12345678\"\r\n}",
+              "raw": "{\r\n    \"name\": \"Victor\",\r\n  \"email\": \"admin@test.com\",\r\n  \"password\": \"Aa12345678\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"

@@ -69,7 +69,10 @@ export const generatePdfBuffer = async (deliveryNote) => {
     if (deliveryNote.signed && deliveryNote.signatureUrl) {
       downloadPdf(deliveryNote.signatureUrl)
         .then((imageBuffer) => {
-          doc.image(imageBuffer);
+          doc.image(imageBuffer, {
+            fit: [400, 400],
+            align: "center",
+          });
           doc.end();
         })
         .catch(() => {
