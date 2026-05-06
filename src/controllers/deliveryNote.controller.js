@@ -149,8 +149,8 @@ export async function signPdf(req, res, next) {
   deliveryNote.signed = true;
   deliveryNote.signedAt = Date.now();
 
-  const pdf = await generatePdfBuffer(deliveryNote);
-  const pdfUrl = await cloudinaryService.uploadPdf(pdf);
+  const pdf = await generatePdfBuffer(deliveryNote, binarySignature);
+  const pdfUrl = await cloudinaryService.uploadPdf(pdf, {public_id : `Albaran${deliveryNote._id}.pdf`});
 
   deliveryNote.pdfUrl = pdfUrl.secure_url;
   await deliveryNote.save();

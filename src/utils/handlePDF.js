@@ -4,7 +4,7 @@ import { AppError } from "../utils/AppError.js";
 
 export async function returnPdf(req, res, next) {
   try {
-    var doc = new PDFDocument();
+    const doc = new PDFDocument({ margin: 40, size: "A4" });
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
@@ -14,74 +14,146 @@ export async function returnPdf(req, res, next) {
 
     doc.pipe(res);
 
-    doc.text("Aprendiendo a usar pdfkit u cloudinary", 100, 450);
-    doc.circle(280, 200, 50).fill("#6600FF");
-    doc.end();
+    doc.fontSize(22).fillColor("#0B3D91").font("Helvetica-Bold").text("Albarán demo", {
+      align: "center",
+    });
+    doc.moveDown();
+    doc.fontSize(12).fillColor("#333333").font("Helvetica").text(
+      "Este PDF es un ejemplo de cómo se renderiza el albarán con una presentación más cuidada.",
+      {
+        align: "left",
+        lineGap: 4,
+      },
+    );
 
-    res.status(200).json();
+    doc.moveDown(2);
+    doc.lineWidth(2).strokeColor("#0B3D91").moveTo(40, doc.y).lineTo(555, doc.y).stroke();
+    doc.end();
   } catch (error) {
     next(error);
   }
 }
 
-export const generatePdfBuffer = async (deliveryNote) => {
+const formatDate = (value) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  return date.toLocaleDateString("es-ES", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
+const normalizedText = (text) => (text || "-").toString();
+
+const drawHorizontalLine = (doc, y) => {
+  doc.save();
+  doc.strokeColor("#CCCCCC").lineWidth(0.5).moveTo(40, y).lineTo(555, y).stroke();
+  doc.restore();
+};
+
+export const generatePdfBuffer = async (deliveryNote, signedBuffer) => {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument();
+    const doc = new PDFDocument({ margin: 40, size: "A4" });
     const buffers = [];
 
-    // Callbacks
     doc.on("data", (chunk) => buffers.push(chunk));
-
-    doc.on("end", () => {
-      // pasar el array a binario
-      const pdfData = Buffer.concat(buffers);
-      resolve(pdfData);
-    });
-
+    doc.on("end", () => resolve(Buffer.concat(buffers)));
     doc.on("error", reject);
 
-    // Contenido del PDF
-    doc.fontSize(20).text("Albarán", { align: "center" });
+    doc.info.Title = "Albarán";
 
-    doc.moveDown();
-    doc.fontSize(12).text(`Cliente: ${deliveryNote.client.name}`);
-    doc.text(`Proyecto: ${deliveryNote.project.name}`);
-    doc.text(`Descripción: ${deliveryNote.description}`);
-    doc.text(`Horas: ${deliveryNote.hours}`);
+    doc.fillColor("#0B3D91").fontSize(22).font("Helvetica-Bold").text("ALBARÁN", {
+      align: "center",
+    });
+
+    doc.moveDown(0.5);
+    drawHorizontalLine(doc, doc.y);
+    doc.moveDown(1);
+
+    doc.fillColor("#333333").fontSize(10).font("Helvetica-Bold").text("Detalles del albarán");
+    doc.moveDown(0.5);
+
+    doc.font("Helvetica").fontSize(10);
+    doc.text(`Fecha del trabajo: ${formatDate(deliveryNote.workDate)}`);
+    doc.text(`Tipo: ${deliveryNote.format === "material" ? "Material" : "Horas"}`);
+    doc.text(`Cliente: ${normalizedText(deliveryNote.client?.name || deliveryNote.client?.description)}`);
+    doc.text(`Proyecto: ${normalizedText(deliveryNote.project?.name || deliveryNote.project?.description)}`);
+    doc.text(`Descripción: ${normalizedText(deliveryNote.description)}`);
+
+    doc.moveDown(1);
+    drawHorizontalLine(doc, doc.y);
+    doc.moveDown(1);
 
     if (deliveryNote.format === "hours") {
-      deliveryNote.workers?.data?.forEach((w) => {
-        doc.text(`Nombre: ${w.name} | Horas: ${w.hours}`);
-      });
+      doc.font("Helvetica-Bold").fontSize(11).fillColor("#0B3D91").text("Detalle de horas");
+      doc.moveDown(0.5);
+      doc.font("Helvetica-Bold").fontSize(10).fillColor("#333333");
+      doc.text("Nombre", 40, doc.y, { continued: true });
+      doc.text("Horas", 300, doc.y, { align: "left" });
+      doc.moveDown(0.3);
+      drawHorizontalLine(doc, doc.y);
+      doc.moveDown(0.5);
+
+      if (Array.isArray(deliveryNote.workers?.data) && deliveryNote.workers.data.length) {
+        doc.font("Helvetica").fontSize(10).fillColor("#000000");
+        deliveryNote.workers.data.forEach((worker) => {
+          doc.text(normalizedText(worker.name), 40, doc.y, { continued: true });
+          doc.text(normalizedText(worker.hours), 300, doc.y, { align: "left" });
+          doc.moveDown(0.5);
+        });
+      } else {
+        doc.font("Helvetica").fontSize(10).fillColor("#666666").text("No hay datos de horas para este albarán.");
+      }
+    } else {
+      doc.font("Helvetica-Bold").fontSize(11).fillColor("#0B3D91").text("Detalle de materiales");
+      doc.moveDown(0.5);
+      doc.font("Helvetica-Bold").fontSize(10).fillColor("#333333");
+      doc.text("Nombre", 40, doc.y, { continued: true });
+      doc.text("Cantidad", 300, doc.y, { continued: true });
+      doc.text("Unidad", 430, doc.y, { align: "left" });
+      doc.moveDown(0.3);
+      drawHorizontalLine(doc, doc.y);
+      doc.moveDown(0.5);
+
+      if (Array.isArray(deliveryNote.material?.data) && deliveryNote.material.data.length) {
+        doc.font("Helvetica").fontSize(10).fillColor("#000000");
+        deliveryNote.material.data.forEach((item) => {
+          doc.text(normalizedText(item.name), 40, doc.y, { continued: true });
+          doc.text(normalizedText(item.quantity), 300, doc.y, { continued: true });
+          doc.text(normalizedText(deliveryNote.material?.unit), 430, doc.y, { align: "left" });
+          doc.moveDown(0.5);
+        });
+      } else {
+        doc.font("Helvetica").fontSize(10).fillColor("#666666").text("No hay datos de material para este albarán.");
+      }
     }
 
-    if (deliveryNote.format === "material") {
-      deliveryNote.material?.data?.forEach((m) => {
-        doc.text(`Nombre: ${m.name} | Cantidad: ${m.quantity}`);
-      });
-    } else {
-      deliveryNote.workers?.data?.forEach((m) => {
-        doc.text(`Nombre: ${m.name} | Horas: ${m.hours}`);
-      });
-    }
-    
-    // Descargar imagen de firma si existe
-    if (deliveryNote.signed && deliveryNote.signatureUrl) {
-      downloadPdf(deliveryNote.signatureUrl)
-        .then((imageBuffer) => {
-          doc.image(imageBuffer, {
-            fit: [400, 400],
-            align: "center",
-          });
-          doc.end();
-        })
-        .catch(() => {
-          // Si falla la descarga, terminar sin imagen
-          doc.end();
+    if (deliveryNote.signed && signedBuffer) {
+      doc.moveDown(1);
+      drawHorizontalLine(doc, doc.y);
+      doc.moveDown(1);
+      doc.font("Helvetica-Bold").fontSize(11).fillColor("#0B3D91").text("Firma");
+      doc.moveDown(0.5);
+      doc.font("Helvetica").fontSize(10).fillColor("#333333");
+      doc.text(`Firmado el: ${formatDate(deliveryNote.signedAt)}`);
+      doc.moveDown(0.5);
+      try {
+        doc.image(signedBuffer, {
+          fit: [250, 100],
+          align: "left",
         });
-    } else {
-      doc.end();
+      } catch (error) {
+        doc.fillColor("#FF0000").fontSize(9).text("No se pudo incrustar la imagen de la firma.");
+      }
     }
+
+    doc.moveDown(2);
+    doc.fontSize(9).fillColor("#777777").font("Helvetica").text(
+      `Documento generado por usr_manager - ${formatDate(new Date())}`,
+      { align: "center" },
+    );
+    doc.end();
   });
 };
 

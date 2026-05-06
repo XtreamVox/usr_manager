@@ -43,6 +43,7 @@ class CloudinaryService {
     return this.uploadBuffer(buffer, {
       folder: "pdf",
       resourceType: "raw",
+      ...options
     });
   }
   async uploadSignatures(buffer, options = {}) {
