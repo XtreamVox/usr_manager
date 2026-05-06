@@ -176,6 +176,17 @@ describe("sendVerificationEmail", () => {
       expect.any(Function),
     );
   });
+
+  it("rejects when the transporter reports an error", async () => {
+    mockSendMail.mockImplementation((options, callback) => callback(new Error("smtp down")));
+
+    await expect(
+      sendVerificationEmail("ada@example.com", "123456", "Ada"),
+    ).rejects.toMatchObject({
+      statusCode: 500,
+      code: "INTERNAL_ERROR",
+    });
+  });
 });
 
 describe("softDeletePlugin", () => {
@@ -242,5 +253,33 @@ describe("softDeletePlugin", () => {
     expect(schema.statics.findWithDeleted.call(model, { role: "admin" })).toBe("query");
     expect(schema.statics.findDeleted.call(model, { role: "admin" })).toBe("query");
     expect(schema.statics.hardDelete.call(model, "id")).toBe("query");
+  });
+
+  it("uses default arguments in instance and static helpers", async () => {
+    const schema = buildSchema();
+    softDeletePlugin(schema);
+    const document = {
+      save: jest.fn().mockResolvedValue("saved"),
+    };
+
+    await expect(schema.methods.softDelete.call(document)).resolves.toBe("saved");
+    expect(document.deletedBy).toBeNull();
+
+    const setOptions = jest.fn().mockReturnValue("query");
+    const model = {
+      findByIdAndUpdate: jest.fn().mockReturnValue({ setOptions }),
+      find: jest.fn().mockReturnValue({ setOptions }),
+    };
+
+    await expect(schema.statics.softDeleteById.call(model, "id")).resolves.toBe("query");
+    expect(model.findByIdAndUpdate).toHaveBeenCalledWith(
+      "id",
+      expect.objectContaining({ deleted: true, deletedBy: null }),
+      { new: true },
+    );
+    expect(schema.statics.findWithDeleted.call(model)).toBe("query");
+    expect(model.find).toHaveBeenCalledWith({});
+    expect(schema.statics.findDeleted.call(model)).toBe("query");
+    expect(model.find).toHaveBeenLastCalledWith({ deleted: true });
   });
 });

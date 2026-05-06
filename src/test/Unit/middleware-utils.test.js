@@ -210,10 +210,26 @@ describe("error middleware", () => {
 
 describe("AppError factories", () => {
   it("builds common HTTP errors", () => {
+    expect(new AppError("boom")).toMatchObject({
+      message: "boom",
+      statusCode: 500,
+      code: null,
+      isOperational: true,
+    });
     expect(AppError.badRequest()).toMatchObject({ statusCode: 400, code: "BAD_REQUEST" });
     expect(AppError.unauthorized()).toMatchObject({ statusCode: 401, code: "UNAUTHORIZED" });
     expect(AppError.forbidden()).toMatchObject({ statusCode: 403, code: "FORBIDDEN" });
+    expect(AppError.notFound()).toMatchObject({
+      statusCode: 404,
+      code: "NOT_FOUND",
+      message: "Recurso no encontrado",
+    });
     expect(AppError.conflict()).toMatchObject({ statusCode: 409, code: "CONFLICT" });
+    expect(AppError.validation()).toMatchObject({
+      statusCode: 400,
+      code: "VALIDATION_ERROR",
+      details: [],
+    });
     expect(AppError.tooManyRequests()).toMatchObject({ statusCode: 429, code: "RATE_LIMIT" });
     expect(AppError.internal()).toMatchObject({ statusCode: 500, code: "INTERNAL_ERROR" });
   });

@@ -449,9 +449,11 @@ describe("Delivery Note Endpoints", () => {
           signatureUrl: "https://cdn.example/signature.png",
           signed: true,
         }),
+        expect.any(Buffer),
       );
       expect(mockCloudinaryService.uploadPdf).toHaveBeenCalledWith(
         Buffer.from("pdf-buffer"),
+        { public_id: `Albaran${deliveryNoteId}.pdf` },
       );
       expect(note.save).toHaveBeenCalled();
       expect(res.body).toEqual(
